@@ -4,17 +4,30 @@ import com.example.authentication.iam.application.internal.outboundservices.emai
 import com.example.authentication.iam.application.internal.outboundservices.hashing.HashingService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.PasswordValidator;
 import com.example.authentication.iam.application.internal.outboundservices.tokens.TokenService;
-import com.example.authentication.iam.domain.exceptions.*;
+import com.example.authentication.iam.domain.exceptions.DifferentPasswordException;
+import com.example.authentication.iam.domain.exceptions.EmailAlreadyExistsException;
+import com.example.authentication.iam.domain.exceptions.InvalidPasswordException;
+import com.example.authentication.iam.domain.exceptions.RoleNotFoundException;
+import com.example.authentication.iam.domain.exceptions.UserNotActiveException;
+import com.example.authentication.iam.domain.exceptions.UserNotFoundException;
+import com.example.authentication.iam.domain.exceptions.UsernameAlreadyExistsException;
 import com.example.authentication.iam.domain.model.aggregates.User;
-import com.example.authentication.iam.domain.model.commands.*;
+import com.example.authentication.iam.domain.model.commands.SignInCommand;
+import com.example.authentication.iam.domain.model.commands.SignUpCommand;
+import com.example.authentication.iam.domain.model.commands.UpdatePasswordCommand;
+import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
+import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
 import com.example.authentication.iam.domain.services.UserCommandService;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import java.util.Optional;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
+/**
+ * Command service implementation responsible for user-related operations
+ * such as authentication, registration, verification, and updates.
+ */
 @Service
 public class UserCommandServiceImpl implements UserCommandService {
 
@@ -24,6 +37,15 @@ public class UserCommandServiceImpl implements UserCommandService {
   private final RoleRepository roleRepository;
   private final EmailService emailService;
 
+  /**
+   * Creates a new {@code UserCommandServiceImpl}.
+   *
+   * @param userRepository repository for user persistence
+   * @param hashingService service for password hashing
+   * @param tokenService service for token generation and validation
+   * @param roleRepository repository for role persistence
+   * @param emailService service for sending emails
+   */
   public UserCommandServiceImpl(
       UserRepository userRepository,
       HashingService hashingService,
@@ -37,6 +59,12 @@ public class UserCommandServiceImpl implements UserCommandService {
     this.emailService = emailService;
   }
 
+  /**
+   * Handles user sign-in.
+   *
+   * @param command sign-in command
+   * @return authenticated user and generated token
+   */
   @Override
   public Optional<ImmutablePair<User, String>> handle(SignInCommand command) {
     var user = userRepository.findByUsername(command.username())
@@ -54,6 +82,12 @@ public class UserCommandServiceImpl implements UserCommandService {
     return Optional.of(ImmutablePair.of(user, token));
   }
 
+  /**
+   * Handles user sign-up.
+   *
+   * @param command sign-up command
+   * @return created user
+   */
   @Override
   public Optional<User> handle(SignUpCommand command) {
     if (userRepository.existsByUsername(command.username())) {
@@ -66,49 +100,84 @@ public class UserCommandServiceImpl implements UserCommandService {
 
     PasswordValidator.validate(command.password());
 
-    var roles = command.roles().stream().map(role ->
-      roleRepository.findByRoles(role.getRoles())
-          .orElseThrow(() -> new RoleNotFoundException(role.getRoles().name())))
+    var roles = command.roles().stream()
+        .map(role ->
+            roleRepository.findByRoles(role.getRoles())
+                .orElseThrow(() ->
+                    new RoleNotFoundException(role.getRoles().name())))
         .toList();
 
-    var user = new User(command.username(), command.email(), hashingService.encode(command.password()), roles);
+    var user = new User(
+        command.username(),
+        command.email(),
+        hashingService.encode(command.password()),
+        roles);
+
     userRepository.save(user);
 
     var token = tokenService.generateToken(user.getUsername());
-    var verificationLink = command.baseUrl() + "/api/v1/authentication/verify?token=" + token;
+    var verificationLink =
+        command.baseUrl()
+            + "/api/v1/authentication/verify?token="
+            + token;
+
     emailService.sendVerificationEmail(user.getEmail(), verificationLink);
 
     return userRepository.findByUsername(command.username());
   }
 
+  /**
+   * Handles user verification.
+   *
+   * @param command verify user command
+   * @return verified user
+   */
   @Override
   public Optional<User> handle(VerifyUserCommand command) {
     if (!tokenService.validateToken(command.token())) {
       throw new RuntimeException("Invalid token");
     }
+
     var username = tokenService.getUsernameFromToken(command.token());
     var user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UserNotFoundException(username));
+
     user.setVerified(true);
     userRepository.save(user);
     return Optional.of(user);
   }
 
+  /**
+   * Handles user status update.
+   *
+   * @param command update status command
+   * @return updated user
+   */
   @Override
   public Optional<User> handle(UpdateUserStatusCommand command) {
     var user = userRepository.findById(command.userId())
-        .orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+        .orElseThrow(() ->
+            new UserNotFoundException(command.userId().toString()));
+
     user.setActive(command.isActive());
     userRepository.save(user);
     return Optional.of(user);
   }
 
+  /**
+   * Handles user password update.
+   *
+   * @param command update password command
+   * @return updated user
+   */
   @Override
   public Optional<User> handle(UpdatePasswordCommand command) {
     var user = userRepository.findById(command.userId())
-        .orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+        .orElseThrow(() ->
+            new UserNotFoundException(command.userId().toString()));
 
-    if (!hashingService.matches(command.currentPassword(), user.getHashedPassword())) {
+    if (!hashingService.matches(
+        command.currentPassword(), user.getHashedPassword())) {
       throw new DifferentPasswordException();
     }
 
