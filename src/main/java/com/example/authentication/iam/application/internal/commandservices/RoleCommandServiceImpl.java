@@ -5,12 +5,16 @@ import com.example.authentication.iam.domain.model.entities.Role;
 import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.domain.services.RoleCommandService;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
+import java.util.Arrays;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-
+/**
+ * Command service implementation responsible for role-related commands.
+ * Handles role seeding and persistence logic.
+ */
 @Service
 public class RoleCommandServiceImpl implements RoleCommandService {
+
   private final RoleRepository roleRepository;
 
   public RoleCommandServiceImpl(RoleRepository roleRepository) {
