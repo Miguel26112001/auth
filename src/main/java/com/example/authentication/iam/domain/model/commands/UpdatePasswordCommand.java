@@ -1,4 +1,10 @@
 package com.example.authentication.iam.domain.model.commands;
 
-public record UpdatePasswordCommand(Long userId, String currentPassword, String newPassword) {
+/**
+ * Command used to update a user's password.
+ */
+public record UpdatePasswordCommand(
+    Long userId,
+    String currentPassword,
+    String newPassword) {
 }
