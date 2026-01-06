@@ -1,20 +1,5 @@
 package com.example.authentication.iam.infrastructure.tokens.jwt.services;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.function.Function;
-
-import javax.crypto.SecretKey;
-
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang3.time.DateUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.example.authentication.iam.infrastructure.tokens.jwt.BearerTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -23,12 +8,22 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-
+import jakarta.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
+import org.apache.commons.lang3.time.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * JWT-based implementation of {@link BearerTokenService}.
  *
- * <p>This service is responsible for generating, validating and extracting
+ * <p>This service is responsible for generating, validating, and extracting
  * information from JSON Web Tokens (JWT) used for authentication.</p>
  */
 @Service
