@@ -1,16 +1,28 @@
 package com.example.authentication.shared.domain.model.aggregates;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import lombok.Getter;
 import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
-@EntityListeners(AuditingEntityListener.class)
+/**
+ * Base aggregate root class that automatically manages creation and update timestamps.
+ *
+ * @param <T> the type of the aggregate extending this class
+ */
 @MappedSuperclass
-public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>> extends AbstractAggregateRoot<T>{
+@EntityListeners(AuditingEntityListener.class)
+public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>>
+    extends AbstractAggregateRoot<T> {
   @Id
   @Getter
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +36,9 @@ public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>> 
   @Column(nullable = false)
   private OffsetDateTime updatedAt;
 
+  /**
+   * Sets creation and update timestamps before persisting.
+   */
   @PrePersist
   protected void onCreate() {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
@@ -31,6 +46,9 @@ public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>> 
     this.updatedAt = now;
   }
 
+  /**
+   * Updates the timestamp before updating the entity.
+   */
   @PreUpdate
   protected void onUpdate() {
     this.updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
