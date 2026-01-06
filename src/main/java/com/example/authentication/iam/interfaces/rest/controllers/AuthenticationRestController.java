@@ -26,56 +26,160 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+/**
+ * REST controller responsible for authentication operations.
+ *
+ * <p>Provides endpoints for user registration and authentication.</p>
+ */
 @RestController
-@RequestMapping(value = "/api/v1/authentication", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Authentication", description = "Authentication endpoints for user and token management")
+@RequestMapping(
+    value = "/api/v1/authentication",
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "Authentication",
+    description = "Authentication endpoints for user and token management"
+)
 public class AuthenticationRestController {
+
   private final UserCommandService userCommandService;
 
+  /**
+   * Creates a new {@code AuthenticationRestController}.
+   *
+   * @param userCommandService service responsible for user commands
+   */
   public AuthenticationRestController(UserCommandService userCommandService) {
     this.userCommandService = userCommandService;
   }
 
+  /**
+   * Authenticates a user using their credentials.
+   *
+   * @param signInResource resource containing username and password
+   * @return authenticated user with access token
+   */
   @PostMapping("/sign-in")
-  @Operation(summary = "Log in into the application", description = "Allows a user to authenticate in the system by providing their credentials (username and password). If the credentials are valid, an access token is returned.")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User authenticated successfully",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthenticatedUserResource.class))),
-      @ApiResponse(responseCode = "400", description = "Invalid password",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "404", description = "User not found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
-  })
+  @Operation(
+      summary = "Log in into the application",
+      description = "Authenticates a user using username and password. "
+          + "If valid, an access token is returned."
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "User authenticated successfully",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(
+                      implementation = AuthenticatedUserResource.class
+                  )
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "Invalid password",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = MessageResource.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "404",
+              description = "User not found",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = MessageResource.class)
+              )
+          )
+      }
+  )
   public ResponseEntity<?> signIn(
       @RequestBody SignInResource signInResource) {
 
     var signInCommand = SignInCommandFromResourceAssembler
         .toCommandFromResource(signInResource);
+
     var authenticatedUser = userCommandService.handle(signInCommand);
-    var authenticatedUserResource = AuthenticatedUserResourceFromEntityAssembler
-        .toResourceFromEntity(
-            authenticatedUser.get().getLeft(), authenticatedUser.get().getRight());
+    if (authenticatedUser.isEmpty()) {
+      return ResponseEntity.status(400).body(new MessageResource("Something went wrong."));
+    }
+
+    var authenticatedUserResource =
+        AuthenticatedUserResourceFromEntityAssembler.toResourceFromEntity(
+            authenticatedUser.get().getLeft(),
+            authenticatedUser.get().getRight()
+        );
+
     return ResponseEntity.ok(authenticatedUserResource);
   }
 
+  /**
+   * Registers a new user in the system.
+   *
+   * @param signUpResource resource containing user registration data
+   * @return created user resource
+   */
   @PostMapping("/sign-up")
-  @Operation(summary = "Register a new user", description = "Allows registering a new user in the system with a specific username, password, and roles.")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "201", description = "User created successfully",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResource.class))),
-      @ApiResponse(responseCode = "400", description = "Bad request (data may be missing or invalid)",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "404", description = "Role not found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "409", description = "Username already exists",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
-  })
-  public ResponseEntity<UserResource> signUp(@Valid @RequestBody SignUpResource signUpResource) {
-    var baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+  @Operation(
+      summary = "Register a new user",
+      description = "Registers a new user with username, password, and roles."
+  )
+  @ApiResponses(
+      value = {
+          @ApiResponse(
+              responseCode = "201",
+              description = "User created successfully",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = UserResource.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "Bad request",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = MessageResource.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "404",
+              description = "Role not found",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = MessageResource.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "409",
+              description = "Username already exists",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = MessageResource.class)
+              )
+          )
+      }
+  )
+  public ResponseEntity<UserResource> signUp(
+      @Valid @RequestBody SignUpResource signUpResource) {
+
+    String baseUrl = ServletUriComponentsBuilder
+        .fromCurrentContextPath()
+        .build()
+        .toUriString();
+
     var signUpCommand = SignUpCommandFromResourceAssembler
         .toCommandFromResource(signUpResource, baseUrl);
+
     var user = userCommandService.handle(signUpCommand);
-    var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
+    if (user.isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
+    var userResource =
+        UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
+
     return new ResponseEntity<>(userResource, HttpStatus.CREATED);
   }
 }
