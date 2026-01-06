@@ -1,10 +1,13 @@
 package com.example.authentication.iam.infrastructure.tokens.jwt.services;
 
-import com.example.authentication.iam.infrastructure.tokens.jwt.BearerTokenService;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.function.Function;
+
+import javax.crypto.SecretKey;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,20 +15,35 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.function.Function;
+import com.example.authentication.iam.infrastructure.tokens.jwt.BearerTokenService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 
+
+/**
+ * JWT-based implementation of {@link BearerTokenService}.
+ *
+ * <p>This service is responsible for generating, validating and extracting
+ * information from JSON Web Tokens (JWT) used for authentication.</p>
+ */
 @Service
 public class TokenServiceImpl implements BearerTokenService {
-  private final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
+
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TokenServiceImpl.class);
+
   private static final String AUTHORIZATION_PARAMETER_NAME = "Authorization";
   private static final String BEARER_TOKEN_PREFIX = "Bearer ";
   private static final int TOKEN_BEGIN_INDEX = 7;
 
   @Value("${authorization.jwt.secret}")
   private String secret;
+
   @Value("${authorization.jwt.expiration.days}")
   private int expirationDays;
 
@@ -35,9 +53,10 @@ public class TokenServiceImpl implements BearerTokenService {
   }
 
   private String buildTokenWithDefaultParameters(String username) {
-    var issuedAt = new Date();
-    var expiration = DateUtils.addDays(issuedAt, expirationDays);
-    var key = getSigningKey();
+    Date issuedAt = new Date();
+    Date expiration = DateUtils.addDays(issuedAt, expirationDays);
+    SecretKey key = getSigningKey();
+
     return Jwts.builder()
         .subject(username)
         .issuedAt(issuedAt)
@@ -54,26 +73,31 @@ public class TokenServiceImpl implements BearerTokenService {
   @Override
   public boolean validateToken(String token) {
     try {
-      Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
-      logger.info("Token is valid");
+      Jwts.parser()
+          .verifyWith(getSigningKey())
+          .build()
+          .parseSignedClaims(token);
+
+      LOGGER.info("Token is valid");
       return true;
-    }  catch (SignatureException e) {
-      logger.error("Invalid JSON Web Token Signature: {}", e.getMessage());
+
+    } catch (SignatureException e) {
+      LOGGER.error("Invalid JSON Web Token signature: {}", e.getMessage());
     } catch (MalformedJwtException e) {
-      logger.error("Invalid JSON Web Token: {}", e.getMessage());
+      LOGGER.error("Invalid JSON Web Token: {}", e.getMessage());
     } catch (ExpiredJwtException e) {
-      logger.error("JSON Web Token is expired: {}", e.getMessage());
+      LOGGER.error("JSON Web Token is expired: {}", e.getMessage());
     } catch (UnsupportedJwtException e) {
-      logger.error("JSON Web Token is unsupported: {}", e.getMessage());
+      LOGGER.error("JSON Web Token is unsupported: {}", e.getMessage());
     } catch (IllegalArgumentException e) {
-      logger.error("JSON Web Token claims string is empty: {}", e.getMessage());
+      LOGGER.error("JSON Web Token claims string is empty: {}", e.getMessage());
     }
     return false;
   }
 
-  private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
-    final Claims claims = extractAllClaims(token);
-    return claimsResolvers.apply(claims);
+  private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    Claims claims = extractAllClaims(token);
+    return claimsResolver.apply(claims);
   }
 
   private Claims extractAllClaims(String token) {
