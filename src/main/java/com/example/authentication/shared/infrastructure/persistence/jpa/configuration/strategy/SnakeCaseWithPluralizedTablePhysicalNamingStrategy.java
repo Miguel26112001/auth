@@ -1,12 +1,20 @@
 package com.example.authentication.shared.infrastructure.persistence.jpa.configuration.strategy;
 
+import static io.github.encryptorcode.pluralize.Pluralize.pluralize;
+
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
-import static io.github.encryptorcode.pluralize.Pluralize.pluralize;
-
+/**
+ * Custom Hibernate PhysicalNamingStrategy that converts all entity names and columns to snake_case
+ * and pluralizes table names.
+ *
+ * <p>This strategy ensures that database tables follow the snake_case naming convention and
+ * table names are pluralized (e.g., User -> users).</p>
+ */
 public class SnakeCaseWithPluralizedTablePhysicalNamingStrategy implements PhysicalNamingStrategy {
+
   @Override
   public Identifier toPhysicalCatalogName(Identifier identifier, JdbcEnvironment jdbcEnvironment) {
     return this.toSnakeCase(identifier);
@@ -19,7 +27,6 @@ public class SnakeCaseWithPluralizedTablePhysicalNamingStrategy implements Physi
 
   @Override
   public Identifier toPhysicalTableName(Identifier identifier, JdbcEnvironment jdbcEnvironment) {
-
     return this.toSnakeCase(this.toPlural(identifier));
   }
 
