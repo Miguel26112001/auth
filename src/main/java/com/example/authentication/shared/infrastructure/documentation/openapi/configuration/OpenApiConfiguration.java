@@ -10,13 +10,25 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configures OpenAPI (Swagger) documentation for the Iam Platform application.
+ *
+ * <p>This configuration defines API metadata, external documentation,
+ * and JWT Bearer security scheme.
+ */
 @Configuration
 public class OpenApiConfiguration {
+
+  /**
+   * Creates and configures the OpenAPI bean for the application.
+   *
+   * @return the configured OpenAPI instance
+   */
   @Bean
-  public OpenAPI authenticationOpenAPI() {
-    var openApi = new OpenAPI();
-    openApi
-        .info(new Info()
+  public OpenAPI authenticationOpenApi() {
+    OpenAPI openApi = new OpenAPI();
+
+    openApi.info(new Info()
             .title("Iam Platform API")
             .description("Iam Platform application REST API documentation.")
             .version("v1.0.0")
@@ -26,11 +38,10 @@ public class OpenApiConfiguration {
             .description("Iam Platform Documentation")
             .url("https://github.com/Miguel26112001/authentication.git"));
 
-    // Add a security scheme
+    // Define the JWT Bearer security scheme
     final String securitySchemeName = "bearerAuth";
 
-    openApi.addSecurityItem(new SecurityRequirement()
-            .addList(securitySchemeName))
+    openApi.addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
         .components(new Components()
             .addSecuritySchemes(securitySchemeName,
                 new SecurityScheme()
@@ -39,7 +50,6 @@ public class OpenApiConfiguration {
                     .scheme("bearer")
                     .bearerFormat("JWT")));
 
-    // Return the OpenAPI configuration object with all the settings
     return openApi;
   }
 }
