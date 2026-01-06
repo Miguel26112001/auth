@@ -16,105 +16,234 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
+/**
+ * REST controller for managing users.
+ *
+ * <p>Allows retrieving, updating status, and updating password of users.
+ * Some operations are restricted to administrators.</p>
+ */
 @RestController
-@RequestMapping(value = "/api/v1/users", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Users", description = "User Management Endpoints")
+@RequestMapping(
+    value = "/api/v1/users",
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "Users",
+    description = "User management endpoints"
+)
 public class UsersController {
+
   private final UserQueryService userQueryService;
   private final UserCommandService userCommandService;
 
+  /**
+   * Creates a new {@code UsersController}.
+   *
+   * @param userQueryService   service used to query users
+   * @param userCommandService service used to execute user commands
+   */
   public UsersController(UserQueryService userQueryService, UserCommandService userCommandService) {
     this.userQueryService = userQueryService;
     this.userCommandService = userCommandService;
   }
 
+  /**
+   * Retrieves all users.
+   *
+   * @return list of user resources
+   */
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  @Operation(summary = "Get all users", description = "Get all users registered in the system.")
+  @Operation(summary = "Get all users", description = "Retrieve all registered users.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Users found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResource.class))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
+      @ApiResponse(
+          responseCode = "200",
+          description = "Users found",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = UserResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Unauthorized",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      )
   })
   public ResponseEntity<List<UserResource>> getAllUsers() {
-    var getAllUsersQuery = new GetAllUsersQuery();
-    var users = userQueryService.handle(getAllUsersQuery);
+    var users = userQueryService.handle(new GetAllUsersQuery());
     var userResources = users.stream()
         .map(UserResourceFromEntityAssembler::toResourceFromEntity)
         .toList();
     return ResponseEntity.ok(userResources);
   }
 
-  @GetMapping(value = "/{userId}")
+  /**
+   * Retrieves a user by ID.
+   *
+   * @param userId the ID of the user
+   * @return user resource or 404 if not found
+   */
+  @GetMapping("/{userId}")
   @PreAuthorize("hasRole('ADMIN') or (hasRole('USER'))")
-  @Operation(summary = "Get user by ID", description = "Get a specific user filtered by its id.")
+  @Operation(summary = "Get user by ID", description = "Retrieve a specific user by ID.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResource.class))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "404", description = "User not found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
+      @ApiResponse(
+          responseCode = "200",
+          description = "User found",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = UserResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Unauthorized",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "User not found",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      )
   })
   public ResponseEntity<?> getUserById(@PathVariable Long userId) {
-    var getUserByIdQuery = new GetUserByIdQuery(userId);
-    var user = userQueryService.handle(getUserByIdQuery);
+    var user = userQueryService.handle(new GetUserByIdQuery(userId));
     if (user.isEmpty()) {
-      return ResponseEntity.status(404).body(new MessageResource("User not found with ID: " + userId));
+      return ResponseEntity.status(404)
+          .body(new MessageResource("User not found with ID: " + userId));
     }
-    var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
-    return ResponseEntity.ok(userResource);
+    return ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user.get()));
   }
 
-  @PatchMapping(value = "/{userId}/status")
+  /**
+   * Updates the status of a user.
+   *
+   * @param userId  the ID of the user
+   * @param isActive new status of the user
+   * @return updated user resource
+   */
+  @PatchMapping("/{userId}/status")
   @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and #userId == principal.id)")
-  @Operation(summary = "Update user status", description = "Update the status of a specific user.")
+  @Operation(summary = "Update user status",
+      description = "Update the active status of a specific user.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User status updated",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResource.class))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "404", description = "User not found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
+      @ApiResponse(
+          responseCode = "200",
+          description = "User status updated",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = UserResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Unauthorized",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "User not found",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      )
   })
-  public ResponseEntity<UserResource> updateUserStatus(@PathVariable Long userId, @RequestParam boolean isActive) {
-    var updateUserStatusCommand = new UpdateUserStatusCommand(userId, isActive);
-    var updatedUser = userCommandService.handle(updateUserStatusCommand);
+  public ResponseEntity<UserResource> updateUserStatus(
+      @PathVariable Long userId,
+      @RequestParam boolean isActive) {
+
+    var updatedUser = userCommandService.handle(new UpdateUserStatusCommand(userId, isActive));
     if (updatedUser.isEmpty()) {
       return ResponseEntity.notFound().build();
     }
-    var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get());
-    return ResponseEntity.ok(userResource);
+    return ResponseEntity
+        .ok(UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get()));
   }
 
-  @PatchMapping(value = "/{userId}/password")
+  /**
+   * Updates the password of a user.
+   *
+   * @param userId  the ID of the user
+   * @param resource new password resource
+   * @return updated user resource
+   */
+  @PatchMapping("/{userId}/password")
   @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and #userId == principal.id)")
-  @Operation(summary = "Update user password", description = "Update the password of a specific user.")
+  @Operation(summary = "Update user password",
+      description = "Update the password of a specific user.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User password updated",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResource.class))),
-      @ApiResponse(responseCode = "400", description = "Weak password or invalid request",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class))),
-      @ApiResponse(responseCode = "404", description = "User not found",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResource.class)))
+      @ApiResponse(
+          responseCode = "200",
+          description = "User password updated",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = UserResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Weak password or invalid request",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Unauthorized",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "User not found",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = MessageResource.class)
+          )
+      )
   })
-  public ResponseEntity<UserResource> updateUserPassword(@PathVariable Long userId, @RequestBody UpdatePasswordResource resource) {
-    var updatePasswordCommand = UpdatePasswordCommandFromResourceAssembler.toCommandFromResource(userId, resource);
-    var updatedUser = userCommandService.handle(updatePasswordCommand);
+  public ResponseEntity<UserResource> updateUserPassword(
+      @PathVariable Long userId,
+      @RequestBody UpdatePasswordResource resource) {
+
+    var updatedUser = userCommandService.handle(
+        UpdatePasswordCommandFromResourceAssembler.toCommandFromResource(userId, resource)
+    );
+
     if (updatedUser.isEmpty()) {
       return ResponseEntity.notFound().build();
     }
-    var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get());
-    return ResponseEntity.ok(userResource);
+
+    return ResponseEntity
+        .ok(UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get()));
   }
 }
