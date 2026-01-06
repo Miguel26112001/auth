@@ -4,8 +4,15 @@ import com.example.authentication.iam.infrastructure.hashing.bcrypt.BcryptHashin
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * BCrypt-based implementation of {@link BcryptHashingService}.
+ *
+ * <p>This service delegates password hashing and verification
+ * to Spring Security's {@link BCryptPasswordEncoder}.</p>
+ */
 @Service
 public class HashingServiceImpl implements BcryptHashingService {
+
   private final BCryptPasswordEncoder passwordEncoder;
 
   HashingServiceImpl() {
