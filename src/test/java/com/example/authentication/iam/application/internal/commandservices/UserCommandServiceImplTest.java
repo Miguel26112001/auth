@@ -28,7 +28,7 @@ import com.example.authentication.iam.infrastructure.persistence.jpa.repositorie
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class UserCommandServiceImplTest {
+class UserCommandServiceImplTest {
   @Mock
   UserRepository userRepository;
   @Mock
