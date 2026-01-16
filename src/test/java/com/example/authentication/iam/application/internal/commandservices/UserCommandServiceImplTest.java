@@ -1,6 +1,7 @@
 package com.example.authentication.iam.application.internal.commandservices;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,16 +11,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
+import org.mockito.MockedStatic;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.authentication.iam.application.internal.outboundservices.email.EmailService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.HashingService;
+import com.example.authentication.iam.application.internal.outboundservices.hashing.PasswordValidator;
 import com.example.authentication.iam.application.internal.outboundservices.tokens.TokenService;
-import com.example.authentication.iam.domain.exceptions.InvalidPasswordException;
-import com.example.authentication.iam.domain.exceptions.UserNotActiveException;
-import com.example.authentication.iam.domain.exceptions.UserNotFoundException;
+import com.example.authentication.iam.domain.exceptions.*;
 import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
+import com.example.authentication.iam.domain.model.commands.SignUpCommand;
+import com.example.authentication.iam.domain.model.entities.Role;
+import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 
@@ -114,5 +118,144 @@ public class UserCommandServiceImplTest {
 
     // Act & Assert
     assertThrows(UserNotActiveException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(SignUpCommand) - success: creates user and sends verification email")
+  void handle_signUp_success_createsUserAndSendsVerificationEmail() {
+    // Arrange
+    var username = "newuser";
+    var email = "newuser@example.com";
+    var rawPassword = "StrongP@ssw0rd";
+    var hashed = "hashedPwd";
+    var token = "signup-token-1";
+    var baseUrl = "http://localhost:8080";
+    User user = new User(username, email, hashed, Collections.emptyList());
+
+    when(userRepository.existsByUsername(username)).thenReturn(false);
+    when(userRepository.existsByEmail(email)).thenReturn(false);
+    when(hashingService.encode(rawPassword)).thenReturn(hashed);
+    when(tokenService.generateToken(username)).thenReturn(token);
+    when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+    var command = new SignUpCommand(username, email, rawPassword, Collections.emptyList(), baseUrl);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).isPresent();
+    assertThat(result.get()).isSameAs(user);
+    var expectedLink = baseUrl + "/api/v1/authentication/verify?token=" + token;
+    verify(emailService).sendVerificationEmail(email, expectedLink);
+  }
+
+  @Test
+  @DisplayName("handle(SignUpCommand) - username exists: throws UsernameAlreadyExistsException")
+  void handle_signUp_usernameExists_throwsUsernameAlreadyExistsException() {
+    // Arrange
+    var username = "existing";
+    var email = "some@example.com";
+    var rawPassword = "password";
+    var baseUrl = "http://localhost";
+    when(userRepository.existsByUsername(username)).thenReturn(true);
+    var command = new SignUpCommand(username, email, rawPassword, Collections.emptyList(), baseUrl);
+
+    // Act & Assert
+    assertThrows(UsernameAlreadyExistsException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(SignUpCommand) - email exists: throws EmailAlreadyExistsException")
+  void handle_signUp_emailExists_throwsEmailAlreadyExistsException() {
+    // Arrange
+    var username = "unique";
+    var email = "existing@example.com";
+    var rawPassword = "password";
+    var baseUrl = "http://localhost";
+    when(userRepository.existsByUsername(username)).thenReturn(false);
+    when(userRepository.existsByEmail(email)).thenReturn(true);
+    var command = new SignUpCommand(username, email, rawPassword, Collections.emptyList(), baseUrl);
+
+    // Act & Assert
+    assertThrows(EmailAlreadyExistsException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(SignUpCommand) - role not found: throws RoleNotFoundException")
+  void handle_signUp_roleNotFound_throwsRoleNotFoundException() {
+    // Arrange
+    var username = "user-with-missing-role";
+    var email = "no-role@example.com";
+    var rawPassword = "StrongP@ssw0rd";
+    var baseUrl = "http://localhost";
+
+    when(userRepository.existsByUsername(username)).thenReturn(false);
+    when(userRepository.existsByEmail(email)).thenReturn(false);
+
+    var requestedRole = mock(Role.class);
+    when(requestedRole.getRoles()).thenReturn(Roles.ROLE_USER);
+
+    when(roleRepository.findByRoles(
+        Roles.ROLE_USER))
+        .thenReturn(Optional.empty());
+
+    var command = new SignUpCommand(
+        username,
+        email,
+        rawPassword,
+        List.of(requestedRole),
+        baseUrl
+    );
+
+    // Act & Assert
+    assertThrows(
+        RoleNotFoundException.class,
+        () -> service.handle(command)
+    );
+
+    // Verificaciones adicionales (alineadas con el resto de tests)
+    verify(userRepository, never()).save(any());
+    verify(emailService, never()).sendVerificationEmail(any(), any());
+  }
+
+  @Test
+  @DisplayName("handle(SignUpCommand) - invalid password: throws InvalidPasswordException")
+  void handle_signUp_invalidPassword_throwsInvalidPasswordException() {
+    // Arrange
+    var username = "weak-pass-user";
+    var email = "weak@example.com";
+    var weakPassword = "123";
+    var baseUrl = "http://localhost";
+
+    when(userRepository.existsByUsername(username)).thenReturn(false);
+    when(userRepository.existsByEmail(email)).thenReturn(false);
+
+    var command = new SignUpCommand(
+        username,
+        email,
+        weakPassword,
+        java.util.Collections.emptyList(),
+        baseUrl
+    );
+
+    try (MockedStatic<PasswordValidator> mocked =
+             mockStatic(PasswordValidator.class)) {
+
+      mocked.when(() ->
+          PasswordValidator
+              .validate(weakPassword)
+      ).thenThrow(new InvalidPasswordException());
+
+      // Act & Assert
+      assertThrows(
+          InvalidPasswordException.class,
+          () -> service.handle(command)
+      );
+    }
+
+    // Verificaciones de seguridad (alineadas con el resto de tests)
+    verify(userRepository, never()).save(any());
+    verify(emailService, never()).sendVerificationEmail(any(), any());
   }
 }
