@@ -30,7 +30,7 @@ public class RoleCommandServiceImplTest {
 
   @Test
   @DisplayName("handle(SeedRolesCommand) seeds all missing roles (AAA)")
-  void handle_ShouldSeed_AllMissingRoles() {
+  void handle_ShouldSaveAllRoles_WhenNoneExist() {
     // Arrange: simular que ningún role existe
     when(roleRepository.existsByRoles(any())).thenReturn(false);
 
@@ -82,6 +82,7 @@ public class RoleCommandServiceImplTest {
     assertEquals(expected, savedRoles);
     assertFalse(savedRoles.contains(vals[0]));
 
+    verify(roleRepository, times(vals.length)).existsByRoles(any());
     verifyNoMoreInteractions(roleRepository);
   }
 }
