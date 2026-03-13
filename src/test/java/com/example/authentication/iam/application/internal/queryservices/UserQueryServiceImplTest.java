@@ -18,7 +18,7 @@ import com.example.authentication.iam.domain.model.queries.GetUserByUsernameQuer
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class UserQueryServiceImplTest {
+class UserQueryServiceImplTest {
 
   @Mock
   UserRepository userRepository;
