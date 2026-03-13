@@ -10,6 +10,10 @@ import java.util.List;
  */
 public class UserResourceFromEntityAssembler {
 
+  private UserResourceFromEntityAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts a {@link User} entity into a {@link UserResource}.
    *

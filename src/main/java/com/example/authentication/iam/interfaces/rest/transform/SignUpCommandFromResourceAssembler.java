@@ -9,6 +9,10 @@ import com.example.authentication.iam.interfaces.rest.resources.SignUpResource;
  */
 public class SignUpCommandFromResourceAssembler {
 
+  private SignUpCommandFromResourceAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts a {@link SignUpResource} into a {@link SignUpCommand}.
    *

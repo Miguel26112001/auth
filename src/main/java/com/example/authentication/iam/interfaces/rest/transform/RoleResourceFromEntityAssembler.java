@@ -8,6 +8,10 @@ import com.example.authentication.iam.interfaces.rest.resources.RoleResource;
  */
 public class RoleResourceFromEntityAssembler {
 
+  private RoleResourceFromEntityAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts a {@link Role} entity into a {@link RoleResource}.
    *
