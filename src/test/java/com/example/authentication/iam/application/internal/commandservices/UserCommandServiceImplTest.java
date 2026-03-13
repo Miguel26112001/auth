@@ -22,6 +22,7 @@ import com.example.authentication.iam.domain.exceptions.*;
 import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
 import com.example.authentication.iam.domain.model.commands.SignUpCommand;
+import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
 import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
 import com.example.authentication.iam.domain.model.entities.Role;
 import com.example.authentication.iam.domain.model.valueobjects.Roles;
@@ -313,6 +314,46 @@ class UserCommandServiceImplTest {
     when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
     var command = new VerifyUserCommand(token);
+
+    // Act & Assert
+    assertThrows(UserNotFoundException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserStatusCommand) - success: updates user status and returns updated user")
+  void handle_updateUserStatus_success_updatesUserStatusAndReturnsUpdatedUser() {
+    // Arrange
+    var userId = 1L;
+    var isActive = true;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(false); // Initial state
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    var command = new UpdateUserStatusCommand(userId, isActive);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).isPresent();
+    assertThat(result.get()).isSameAs(user);
+    assertThat(user.isActive()).isTrue();
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserStatusCommand) - user not found: throws UserNotFoundException")
+  void handle_updateUserStatus_userNotFound_throwsUserNotFoundException() {
+    // Arrange
+    var userId = 999L;
+    var isActive = false;
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    var command = new UpdateUserStatusCommand(userId, isActive);
 
     // Act & Assert
     assertThrows(UserNotFoundException.class, () -> service.handle(command));
