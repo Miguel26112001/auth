@@ -18,7 +18,7 @@ import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class RoleQueryServiceImplTest {
+class RoleQueryServiceImplTest {
 
   @Mock
   RoleRepository roleRepository;
