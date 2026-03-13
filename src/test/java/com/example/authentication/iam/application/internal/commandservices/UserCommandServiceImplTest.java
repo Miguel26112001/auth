@@ -22,6 +22,7 @@ import com.example.authentication.iam.domain.exceptions.*;
 import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
 import com.example.authentication.iam.domain.model.commands.SignUpCommand;
+import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
 import com.example.authentication.iam.domain.model.entities.Role;
 import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
@@ -257,5 +258,63 @@ class UserCommandServiceImplTest {
     // Verificaciones de seguridad (alineadas con el resto de tests)
     verify(userRepository, never()).save(any());
     verify(emailService, never()).sendVerificationEmail(any(), any());
+  }
+
+  @Test
+  @DisplayName("handle(VerifyUserCommand) - success: verifies user and returns updated user")
+  void handle_verifyUser_success_verifiesUserAndReturnsUpdatedUser() {
+    // Arrange
+    var token = "valid-token";
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(false);
+
+    when(tokenService.validateToken(token)).thenReturn(true);
+    when(tokenService.getUsernameFromToken(token)).thenReturn(username);
+    when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+    var command = new VerifyUserCommand(token);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).isPresent();
+    assertThat(result.get()).isSameAs(user);
+    assertThat(user.isVerified()).isTrue();
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  @DisplayName("handle(VerifyUserCommand) - invalid token: throws RuntimeException")
+  void handle_verifyUser_invalidToken_throwsRuntimeException() {
+    // Arrange
+    var token = "invalid-token";
+
+    when(tokenService.validateToken(token)).thenReturn(false);
+
+    var command = new VerifyUserCommand(token);
+
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> service.handle(command), "Invalid token");
+  }
+
+  @Test
+  @DisplayName("handle(VerifyUserCommand) - user not found: throws UserNotFoundException")
+  void handle_verifyUser_userNotFound_throwsUserNotFoundException() {
+    // Arrange
+    var token = "valid-token";
+    var username = "missing";
+
+    when(tokenService.validateToken(token)).thenReturn(true);
+    when(tokenService.getUsernameFromToken(token)).thenReturn(username);
+    when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+    var command = new VerifyUserCommand(token);
+
+    // Act & Assert
+    assertThrows(UserNotFoundException.class, () -> service.handle(command));
   }
 }
