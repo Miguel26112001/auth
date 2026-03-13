@@ -8,6 +8,10 @@ import com.example.authentication.iam.interfaces.rest.resources.AuthenticatedUse
  */
 public class AuthenticatedUserResourceFromEntityAssembler {
 
+  private AuthenticatedUserResourceFromEntityAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts a {@link User} entity and a token into an {@link AuthenticatedUserResource}.
    *
