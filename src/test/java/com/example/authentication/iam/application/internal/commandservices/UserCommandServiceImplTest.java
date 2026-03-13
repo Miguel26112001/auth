@@ -181,6 +181,43 @@ class UserCommandServiceImplTest {
   }
 
   @Test
+  @DisplayName("handle(SignUpCommand) - with roles: creates user with roles and sends verification email")
+  void handle_signUp_withRoles_createsUserWithRolesAndSendsVerificationEmail() {
+    // Arrange
+    var username = "newuser";
+    var email = "newuser@example.com";
+    var rawPassword = "StrongP@ssw0rd";
+    var hashed = "hashedPwd";
+    var token = "signup-token-1";
+    var baseUrl = "http://localhost:8080";
+
+    var roleEntity = mock(Role.class);
+    var requestedRole = mock(Role.class);
+    when(requestedRole.getRoles()).thenReturn(Roles.ROLE_USER);
+
+    when(userRepository.existsByUsername(username)).thenReturn(false);
+    when(userRepository.existsByEmail(email)).thenReturn(false);
+    when(roleRepository.findByRoles(Roles.ROLE_USER)).thenReturn(Optional.of(roleEntity));
+    when(hashingService.encode(rawPassword)).thenReturn(hashed);
+    when(tokenService.generateToken(username)).thenReturn(token);
+
+    User user = new User(username, email, hashed, List.of(roleEntity));
+    when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+    var command = new SignUpCommand(username, email, rawPassword, List.of(requestedRole), baseUrl);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).isPresent();
+    assertThat(result.get()).isSameAs(user);
+    assertThat(user.getRoles()).contains(roleEntity);
+    var expectedLink = baseUrl + "/api/v1/authentication/verify?token=" + token;
+    verify(emailService).sendVerificationEmail(email, expectedLink);
+  }
+
+  @Test
   @DisplayName("handle(SignUpCommand) - role not found: throws RoleNotFoundException")
   void handle_signUp_roleNotFound_throwsRoleNotFoundException() {
     // Arrange
@@ -444,5 +481,4 @@ class UserCommandServiceImplTest {
       assertThrows(InvalidPasswordException.class, () -> service.handle(command));
     }
   }
-
 }
