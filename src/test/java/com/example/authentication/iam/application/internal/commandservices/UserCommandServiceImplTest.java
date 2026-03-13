@@ -20,10 +20,7 @@ import com.example.authentication.iam.application.internal.outboundservices.hash
 import com.example.authentication.iam.application.internal.outboundservices.tokens.TokenService;
 import com.example.authentication.iam.domain.exceptions.*;
 import com.example.authentication.iam.domain.model.aggregates.User;
-import com.example.authentication.iam.domain.model.commands.SignInCommand;
-import com.example.authentication.iam.domain.model.commands.SignUpCommand;
-import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
-import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
+import com.example.authentication.iam.domain.model.commands.*;
 import com.example.authentication.iam.domain.model.entities.Role;
 import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
@@ -358,4 +355,94 @@ class UserCommandServiceImplTest {
     // Act & Assert
     assertThrows(UserNotFoundException.class, () -> service.handle(command));
   }
+
+  @Test
+  @DisplayName("handle(UpdatePasswordCommand) - success: updates password and returns updated user")
+  void handle_updatePassword_success_updatesPasswordAndReturnsUpdatedUser() {
+    // Arrange
+    var userId = 1L;
+    var currentPassword = "oldPassword";
+    var newPassword = "NewStrongP@ssw0rd";
+    var hashedNew = "hashedNewPassword";
+    var username = "alice";
+    var oldHashed = "hashedOldPassword";
+    User user = new User(username, "alice@example.com", oldHashed, Collections.emptyList());
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(hashingService.matches(currentPassword, oldHashed)).thenReturn(true);
+    when(hashingService.encode(newPassword)).thenReturn(hashedNew);
+
+    var command = new UpdatePasswordCommand(userId, currentPassword, newPassword);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).isPresent();
+    assertThat(result.get()).isSameAs(user);
+    assertThat(user.getHashedPassword()).isEqualTo(hashedNew);
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  @DisplayName("handle(UpdatePasswordCommand) - user not found: throws UserNotFoundException")
+  void handle_updatePassword_userNotFound_throwsUserNotFoundException() {
+    // Arrange
+    var userId = 999L;
+    var currentPassword = "irrelevant";
+    var newPassword = "irrelevant";
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    var command = new UpdatePasswordCommand(userId, currentPassword, newPassword);
+
+    // Act & Assert
+    assertThrows(UserNotFoundException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdatePasswordCommand) - current password mismatch: throws DifferentPasswordException")
+  void handle_updatePassword_currentPasswordMismatch_throwsDifferentPasswordException() {
+    // Arrange
+    var userId = 1L;
+    var currentPassword = "wrongPassword";
+    var newPassword = "NewStrongP@ssw0rd";
+    var username = "alice";
+    var oldHashed = "hashedOldPassword";
+    User user = new User(username, "alice@example.com", oldHashed, Collections.emptyList());
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(hashingService.matches(currentPassword, oldHashed)).thenReturn(false);
+
+    var command = new UpdatePasswordCommand(userId, currentPassword, newPassword);
+
+    // Act & Assert
+    assertThrows(DifferentPasswordException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdatePasswordCommand) - invalid new password: throws InvalidPasswordException")
+  void handle_updatePassword_invalidNewPassword_throwsInvalidPasswordException() {
+    // Arrange
+    var userId = 1L;
+    var currentPassword = "oldPassword";
+    var invalidNewPassword = "123";
+    var username = "alice";
+    var oldHashed = "hashedOldPassword";
+    User user = new User(username, "alice@example.com", oldHashed, Collections.emptyList());
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(hashingService.matches(currentPassword, oldHashed)).thenReturn(true);
+
+    var command = new UpdatePasswordCommand(userId, currentPassword, invalidNewPassword);
+
+    try (MockedStatic<PasswordValidator> mocked = mockStatic(PasswordValidator.class)) {
+      mocked.when(() -> PasswordValidator.validate(invalidNewPassword))
+          .thenThrow(new InvalidPasswordException());
+
+      // Act & Assert
+      assertThrows(InvalidPasswordException.class, () -> service.handle(command));
+    }
+  }
+
 }
