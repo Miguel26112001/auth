@@ -8,6 +8,10 @@ import com.example.authentication.iam.interfaces.rest.resources.SignInResource;
  */
 public class SignInCommandFromResourceAssembler {
 
+  private SignInCommandFromResourceAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts a {@link SignInResource} into a {@link SignInCommand}.
    *
