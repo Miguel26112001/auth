@@ -1,86 +1,29 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Java CI with Maven and SonarCloud
+name: Java CI with Maven
 
 on:
   push:
-    branches:
-      - master
-      - develop
-      - 'test/*'
-      
+    branches: [ master, develop ]
   pull_request:
-    branches:
-      - master
-      - develop
-      - 'test/*'
+    branches: [ master, develop ]
 
 jobs:
-  build-and-analyze:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    # Paso 1: Checkout del código
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # IMPORTANTE para SonarCloud multi-rama
+      - uses: actions/checkout@v4
 
-    # Paso 2: Configurar Java
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
 
-    # Paso 3: Cache para SonarCloud (mejora rendimiento)
-    - name: Cache SonarCloud packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.sonar/cache
-        key: ${{ runner.os }}-sonar-${{ github.ref }}
-        restore-keys: |
-          ${{ runner.os }}-sonar-
+      - name: Build with Maven
+        run: mvn -B clean verify
 
-    # Paso 4: Análisis con SonarCloud (PRIMERO)
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.branch.name=${{ github.ref_name }}
-          -Dsonar.branch.target=master
-          ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}', github.event.number, github.head_ref, github.base_ref) || '' }}
-
-    # Paso 5: Compilar y hacer tests (DESPUÉS de SonarCloud)
-    - name: Build and Test with Maven
-      run: |
-        mvn clean verify
-        # Si quieres que falle el build si los tests fallan, usa:
-        # mvn clean verify sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-
-    # Paso 6: Generar reporte de cobertura (opcional pero recomendado)
-    - name: Generate JaCoCo Report
-      run: mvn jacoco:report
-      if: success() || failure()  # Ejecutar siempre
-
-    # Paso 7: Subir artifacts (opcional)
-    - name: Upload JAR artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: java-app
-        path: target/*.jar
-      if: success()
-
-    # Paso 8: Dependency Graph (lo mantienes de tu original)
-    - name: Update dependency graph
-      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
