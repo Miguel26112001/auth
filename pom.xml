@@ -277,6 +277,8 @@
                         <exclude>com/example/authentication/**/infrastructure/**</exclude>
                         <exclude>com/example/authentication/**/interfaces/rest/resources/**</exclude>
                         <exclude>com/example/authentication/**/interfaces/rest/controllers/**</exclude>
+                        <exclude>com/example/authentication/**/interfaces/rest/exceptions/**</exclude>
+                        <exclude>com/example/authentication/AuthenticationApplication*</exclude>
                     </excludes>
                     <rules>
                         <rule>

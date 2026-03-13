@@ -8,11 +8,15 @@ import com.example.authentication.iam.interfaces.rest.resources.UpdatePasswordRe
  */
 public class UpdatePasswordCommandFromResourceAssembler {
 
+  private UpdatePasswordCommandFromResourceAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Converts an {@link UpdatePasswordResource} into an {@link UpdatePasswordCommand}.
    *
    * @param userId  the ID of the user whose password is being updated
-   * @param resource the resource containing current and new password
+   * @param resource the resource containing the current and new password
    * @return the corresponding UpdatePasswordCommand
    */
   public static UpdatePasswordCommand toCommandFromResource(
