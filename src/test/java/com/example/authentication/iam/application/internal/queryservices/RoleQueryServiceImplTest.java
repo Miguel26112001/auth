@@ -55,8 +55,7 @@ class RoleQueryServiceImplTest {
     var result = service.handle(query);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(role);
+    assertThat(result).containsSame(role);
   }
 
   @Test
@@ -72,8 +71,7 @@ class RoleQueryServiceImplTest {
     var result = service.handle(query);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(role);
+    assertThat(result).containsSame(role);
   }
 
   @Test
