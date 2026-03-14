@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.example.authentication.iam.interfaces.rest.resources.UpdatePasswordResource;
 
-public class UpdatePasswordCommandFromResourceAssemblerTest {
+class UpdatePasswordCommandFromResourceAssemblerTest {
 
   @Test
   @DisplayName("toCommandFromResource - success: assembles UpdatePasswordCommand with correct fields")
