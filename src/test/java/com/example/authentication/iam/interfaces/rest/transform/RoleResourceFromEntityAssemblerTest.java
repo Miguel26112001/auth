@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.example.authentication.iam.domain.model.entities.Role;
 
-public class RoleResourceFromEntityAssemblerTest {
+class RoleResourceFromEntityAssemblerTest {
 
   @Test
   @DisplayName("toResourceFromEntity - success: assembles RoleResource with correct fields")

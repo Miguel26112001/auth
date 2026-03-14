@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.example.authentication.iam.interfaces.rest.resources.SignUpResource;
 
-public class SignUpCommandFromResourceAssemblerTest {
+class SignUpCommandFromResourceAssemblerTest {
 
   @Test
   @DisplayName("toCommandFromResource - success: assembles SignUpCommand with valid roles")
