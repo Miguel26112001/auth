@@ -7,6 +7,7 @@ import com.example.authentication.iam.application.internal.outboundservices.toke
 import com.example.authentication.iam.domain.exceptions.DifferentPasswordException;
 import com.example.authentication.iam.domain.exceptions.EmailAlreadyExistsException;
 import com.example.authentication.iam.domain.exceptions.InvalidPasswordException;
+import com.example.authentication.iam.domain.exceptions.InvalidTokenException;
 import com.example.authentication.iam.domain.exceptions.RoleNotFoundException;
 import com.example.authentication.iam.domain.exceptions.UserNotActiveException;
 import com.example.authentication.iam.domain.exceptions.UserNotFoundException;
@@ -135,7 +136,7 @@ public class UserCommandServiceImpl implements UserCommandService {
   @Override
   public Optional<User> handle(VerifyUserCommand command) {
     if (!tokenService.validateToken(command.token())) {
-      throw new RuntimeException("Invalid token");
+      throw new InvalidTokenException();
     }
 
     var username = tokenService.getUsernameFromToken(command.token());

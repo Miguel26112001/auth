@@ -1,6 +1,7 @@
 package com.example.authentication.iam.infrastructure.email.javamail;
 
 import com.example.authentication.iam.application.internal.outboundservices.email.EmailService;
+import com.example.authentication.iam.domain.exceptions.EmailSendingException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
@@ -77,9 +78,9 @@ public class EmailServiceImpl implements EmailService {
 
       mailSender.send(message);
     } catch (MessagingException e) {
-      throw new RuntimeException(
-                "Error sending verification email",
-                e);
+      throw new EmailSendingException(
+          "Error sending verification email",
+          e);
     }
   }
 }
