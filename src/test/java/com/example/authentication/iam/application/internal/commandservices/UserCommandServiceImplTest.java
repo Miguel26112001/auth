@@ -143,8 +143,7 @@ class UserCommandServiceImplTest {
     Optional<User> result = service.handle(command);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
     var expectedLink = baseUrl + "/api/v1/authentication/verify?token=" + token;
     verify(emailService).sendVerificationEmail(email, expectedLink);
   }
