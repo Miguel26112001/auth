@@ -1,7 +1,7 @@
 package com.example.authentication.iam.interfaces.rest.transform;
 
 import java.util.List;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.example.authentication.iam.interfaces.rest.resources.SignUpResource;
@@ -31,7 +31,7 @@ class SignUpCommandFromResourceAssemblerTest {
     assertThat(result.username()).isEqualTo("alice");
     assertThat(result.email()).isEqualTo("alice@example.com");
     assertThat(result.password()).isEqualTo("password123");
-    assertThat(result.roles().size()).isEqualTo(1);
+    assertThat(result.roles()).hasSize(1);
     assertThat(result.baseUrl()).isEqualTo(baseUrl);
   }
 
