@@ -369,8 +369,7 @@ class UserCommandServiceImplTest {
     Optional<User> result = service.handle(command);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
     assertThat(user.isActive()).isTrue();
     verify(userRepository).save(user);
   }
@@ -412,8 +411,7 @@ class UserCommandServiceImplTest {
     Optional<User> result = service.handle(command);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
     assertThat(user.getHashedPassword()).isEqualTo(hashedNew);
     verify(userRepository).save(user);
   }
