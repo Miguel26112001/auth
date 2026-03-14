@@ -320,8 +320,8 @@ class UserCommandServiceImplTest {
   }
 
   @Test
-  @DisplayName("handle(VerifyUserCommand) - invalid token: throws RuntimeException")
-  void handle_verifyUser_invalidToken_throwsRuntimeException() {
+  @DisplayName("handle(VerifyUserCommand) - invalid token: throws InvalidTokenException")
+  void handle_verifyUser_invalidToken_throwsInvalidTokenException() {
     // Arrange
     var token = "invalid-token";
 
@@ -330,7 +330,7 @@ class UserCommandServiceImplTest {
     var command = new VerifyUserCommand(token);
 
     // Act & Assert
-    assertThrows(RuntimeException.class, () -> service.handle(command), "Invalid token");
+    assertThrows(InvalidTokenException.class, () -> service.handle(command));
   }
 
   @Test
