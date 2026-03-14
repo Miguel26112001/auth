@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.example.authentication.iam.domain.model.aggregates.User;
 
-public class AuthenticatedUserResourceFromEntityAssemblerTest {
+class AuthenticatedUserResourceFromEntityAssemblerTest {
 
   @Test
   @DisplayName("toResourceFromEntity - success: assembles AuthenticatedUserResource with correct fields")

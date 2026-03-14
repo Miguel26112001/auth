@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.example.authentication.iam.interfaces.rest.resources.SignInResource;
 
-public class SignInCommandFromResourceAssemblerTest {
+class SignInCommandFromResourceAssemblerTest {
 
   @Test
   @DisplayName("toCommandFromResource - success: assembles SignInCommand with correct fields")
