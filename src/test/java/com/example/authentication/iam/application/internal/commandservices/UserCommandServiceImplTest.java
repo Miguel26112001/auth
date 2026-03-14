@@ -209,8 +209,7 @@ class UserCommandServiceImplTest {
     Optional<User> result = service.handle(command);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
     assertThat(user.getRoles()).contains(roleEntity);
     var expectedLink = baseUrl + "/api/v1/authentication/verify?token=" + token;
     verify(emailService).sendVerificationEmail(email, expectedLink);
@@ -315,8 +314,7 @@ class UserCommandServiceImplTest {
     Optional<User> result = service.handle(command);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
     assertThat(user.isVerified()).isTrue();
     verify(userRepository).save(user);
   }
