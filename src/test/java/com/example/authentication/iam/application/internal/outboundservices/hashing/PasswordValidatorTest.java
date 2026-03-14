@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.example.authentication.iam.domain.exceptions.WeakPasswordException;
 
-public class PasswordValidatorTest {
+class PasswordValidatorTest {
 
   @Test
   @DisplayName("validate - valid password: does not throw exception")
