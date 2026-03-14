@@ -56,8 +56,7 @@ class UserQueryServiceImplTest {
     var result = service.handle(query);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
   }
 
   @Test
@@ -90,8 +89,7 @@ class UserQueryServiceImplTest {
     var result = service.handle(query);
 
     // Assert
-    assertThat(result).isPresent();
-    assertThat(result.get()).isSameAs(user);
+    assertThat(result).containsSame(user);
   }
 
   @Test
