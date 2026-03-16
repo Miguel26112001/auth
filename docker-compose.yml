@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: auth-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  auth-app:
+    build: .
+    container_name: auth-api
+    depends_on:
+      - postgres
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8090
+      DATABASE_URL: jdbc:postgresql://postgres:5432/auth
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      JWT_SECRET: example-secret
+      JWT_EXPIRATION_DAYS: 1
+      MAIL_HOST: smtp.sendgrid.net
+      MAIL_PORT: 587
+      MAIL_USERNAME: apikey
+      MAIL_PASSWORD: example
+      MAIL_FROM: noreply@example.com
+
+volumes:
+  postgres_data:
