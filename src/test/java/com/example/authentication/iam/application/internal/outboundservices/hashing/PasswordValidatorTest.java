@@ -3,6 +3,8 @@ package com.example.authentication.iam.application.internal.outboundservices.has
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import com.example.authentication.iam.domain.exceptions.WeakPasswordException;
 
 class PasswordValidatorTest {
@@ -13,7 +15,7 @@ class PasswordValidatorTest {
     // Arrange
     var password = "StrongP@ssw0rd";
 
-    // Act & Assert
+    // Act
     PasswordValidator.validate(password);
   }
 
@@ -24,76 +26,27 @@ class PasswordValidatorTest {
     String password = null;
 
     // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
+    assertThrows(WeakPasswordException.class,
+        () -> PasswordValidator.validate(password));
   }
 
-  @Test
-  @DisplayName("validate - short password: throws WeakPasswordException")
-  void validate_shortPassword_throwsWeakPasswordException() {
-    // Arrange
-    var password = "123";
+  @ParameterizedTest(name = "validate - invalid password \"{0}\" throws WeakPasswordException")
+  @ValueSource(strings = {
+      "123",              // too short
+      "strongp@ssw0rd",   // missing uppercase
+      "STRONGP@SSW0RD",   // missing lowercase
+      "StrongP@ssword",   // missing number
+      "StrongPassw0rd",   // missing special character
+      "",                 // empty
+      "Strong P@ssw0rd"   // contains spaces
+  })
+  @DisplayName("validate - invalid passwords: throws WeakPasswordException")
+  void validate_invalidPasswords_throwsWeakPasswordException(String password) {
 
     // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - missing uppercase: throws WeakPasswordException")
-  void validate_missingUppercase_throwsWeakPasswordException() {
-    // Arrange
-    var password = "strongp@ssw0rd";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - missing lowercase: throws WeakPasswordException")
-  void validate_missingLowercase_throwsWeakPasswordException() {
-    // Arrange
-    var password = "STRONGP@SSW0RD";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - missing number: throws WeakPasswordException")
-  void validate_missingNumber_throwsWeakPasswordException() {
-    // Arrange
-    var password = "StrongP@ssword";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - missing special character: throws WeakPasswordException")
-  void validate_missingSpecialCharacter_throwsWeakPasswordException() {
-    // Arrange
-    var password = "StrongPassw0rd";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - empty password: throws WeakPasswordException")
-  void validate_emptyPassword_throwsWeakPasswordException() {
-    // Arrange
-    var password = "";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
-  }
-
-  @Test
-  @DisplayName("validate - password with spaces: throws WeakPasswordException")
-  void validate_passwordWithSpaces_throwsWeakPasswordException() {
-    // Arrange
-    var password = "Strong P@ssw0rd";
-
-    // Act & Assert
-    assertThrows(WeakPasswordException.class, () -> PasswordValidator.validate(password));
+    assertThrows(
+        WeakPasswordException.class,
+        () -> PasswordValidator.validate(password)
+    );
   }
 }
