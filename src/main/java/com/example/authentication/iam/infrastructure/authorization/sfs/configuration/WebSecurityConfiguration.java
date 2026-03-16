@@ -118,6 +118,8 @@ public class WebSecurityConfiguration {
               return cors;
             }))
         .csrf(AbstractHttpConfigurer::disable)
+        // Safe: CSRF protection is disabled because the API is stateless and uses JWT
+        // authentication via Authorization header instead of session cookies.
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
         .sessionManagement(sessionManagement ->
