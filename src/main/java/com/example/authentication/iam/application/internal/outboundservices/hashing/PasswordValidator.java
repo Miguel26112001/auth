@@ -8,13 +8,14 @@ import java.util.regex.Pattern;
  */
 public final class PasswordValidator {
 
-  private static final String PASSWORD_PATTERN =
+  private static final String STRONG_PASSWORD_REGEX =
       "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
 
-  private static final Pattern PATTERN = Pattern.compile(PASSWORD_PATTERN);
+  private static final Pattern STRONG_PASSWORD_PATTERN =
+      Pattern.compile(STRONG_PASSWORD_REGEX);
 
   private PasswordValidator() {
-      // Utility class
+    // Utility class
   }
 
   /**
@@ -24,7 +25,7 @@ public final class PasswordValidator {
    * @throws WeakPasswordException if the password does not meet the requirements
    */
   public static void validate(String password) {
-    if (password == null || !PATTERN.matcher(password).matches()) {
+    if (password == null || !STRONG_PASSWORD_PATTERN.matcher(password).matches()) {
       throw new WeakPasswordException(
           "Password must be at least 8 characters long, "
               + "include at least one uppercase letter, "
