@@ -1,6 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout/message-layout :: layout(
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+
+<head>
+    <title>Error de Verificación</title>
+</head>
+
+<body th:replace="layout/message-layout :: layout(
         'Error de Verificación',
         '¡Error de Verificación!',
         '#e74c3c',
@@ -8,4 +13,6 @@
         'Volver al Inicio',
         ${error}
       )">
+</body>
+
 </html>

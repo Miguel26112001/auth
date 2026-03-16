@@ -1,6 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout/message-layout :: layout(
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+
+<head>
+    <title>Verificación Exitosa</title>
+</head>
+
+<body th:replace="layout/message-layout :: layout(
         'Verificación Exitosa',
         '¡Cuenta Verificada!',
         '#27ae60',
@@ -8,4 +13,6 @@
         'Ir al Inicio',
         null
       )">
+</body>
+
 </html>
