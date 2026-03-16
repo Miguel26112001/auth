@@ -95,15 +95,18 @@ public class AuthenticationRestController {
           )
       }
   )
-  public ResponseEntity<?> signIn(
+  public ResponseEntity<Object> signIn(
       @RequestBody SignInResource signInResource) {
 
     var signInCommand = SignInCommandFromResourceAssembler
         .toCommandFromResource(signInResource);
 
     var authenticatedUser = userCommandService.handle(signInCommand);
+
     if (authenticatedUser.isEmpty()) {
-      return ResponseEntity.status(400).body(new MessageResource("Something went wrong."));
+      return ResponseEntity
+          .status(HttpStatus.BAD_REQUEST)
+          .body(new MessageResource("Something went wrong."));
     }
 
     var authenticatedUserResource =
