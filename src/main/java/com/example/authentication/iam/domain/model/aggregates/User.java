@@ -68,7 +68,7 @@ public class User extends AuditableAbstractAggregateRoot<User> {
    */
   public User() {
     this.roles = new HashSet<>();
-    this.isActive = true;
+    this.isActive = false;
     this.isVerified = false;
   }
 
@@ -84,7 +84,7 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     this.email = email;
     this.hashedPassword = hashedPassword;
     this.roles = new HashSet<>();
-    this.isActive = true;
+    this.isActive = false;
     this.isVerified = false;
   }
 
