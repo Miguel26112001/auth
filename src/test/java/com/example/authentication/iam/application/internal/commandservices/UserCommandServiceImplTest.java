@@ -51,6 +51,7 @@ class UserCommandServiceImplTest {
     var token = "token-abc";
     User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
     user.setActive(true);
+    user.setVerified(true);
 
     when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
     when(hashingService.matches(rawPassword, hashed)).thenReturn(true);
@@ -101,6 +102,26 @@ class UserCommandServiceImplTest {
   }
 
   @Test
+  @DisplayName("handle(SignInCommand) - user not verified: throws UserNotVerifiedException")
+  void handle_signIn_userNotVerified_throwsUserNotVerifiedException() {
+    // Arrange
+    var username = "charlie";
+    var rawPassword = "password";
+    var hashed = "hashed";
+    User user = new User(username, "charlie@example.com", hashed, Collections.emptyList());
+    user.setVerified(false);
+    user.setActive(false);
+
+    when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+    when(hashingService.matches(rawPassword, hashed)).thenReturn(true);
+
+    var command = new SignInCommand(username, rawPassword);
+
+    // Act & Assert
+    assertThrows(UserNotVerifiedException.class, () -> service.handle(command));
+  }
+
+  @Test
   @DisplayName("handle(SignInCommand) - user not active: throws UserNotActiveException")
   void handle_signIn_userNotActive_throwsUserNotActiveException() {
     // Arrange
@@ -109,6 +130,7 @@ class UserCommandServiceImplTest {
     var hashed = "hashed";
     User user = new User(username, "charlie@example.com", hashed, Collections.emptyList());
     user.setActive(false);
+    user.setVerified(true);
 
     when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
     when(hashingService.matches(rawPassword, hashed)).thenReturn(true);
@@ -301,8 +323,7 @@ class UserCommandServiceImplTest {
     var username = "alice";
     var hashed = "hashedPassword";
     User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
-    user.setActive(true);
-    user.setVerified(false);
+
 
     when(tokenService.validateToken(token)).thenReturn(true);
     when(tokenService.getUsernameFromToken(token)).thenReturn(username);
@@ -316,6 +337,7 @@ class UserCommandServiceImplTest {
     // Assert
     assertThat(result).containsSame(user);
     assertThat(user.isVerified()).isTrue();
+    assertThat(user.isActive()).isTrue();
     verify(userRepository).save(user);
   }
 

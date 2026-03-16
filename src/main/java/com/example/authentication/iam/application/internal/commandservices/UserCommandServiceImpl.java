@@ -11,6 +11,7 @@ import com.example.authentication.iam.domain.exceptions.InvalidTokenException;
 import com.example.authentication.iam.domain.exceptions.RoleNotFoundException;
 import com.example.authentication.iam.domain.exceptions.UserNotActiveException;
 import com.example.authentication.iam.domain.exceptions.UserNotFoundException;
+import com.example.authentication.iam.domain.exceptions.UserNotVerifiedException;
 import com.example.authentication.iam.domain.exceptions.UsernameAlreadyExistsException;
 import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
@@ -73,6 +74,10 @@ public class UserCommandServiceImpl implements UserCommandService {
 
     if (!hashingService.matches(command.password(), user.getHashedPassword())) {
       throw new InvalidPasswordException();
+    }
+
+    if (!user.isVerified()) {
+      throw new UserNotVerifiedException(user.getUsername());
     }
 
     if (!user.isActive()) {
@@ -144,6 +149,7 @@ public class UserCommandServiceImpl implements UserCommandService {
         .orElseThrow(() -> new UserNotFoundException(username));
 
     user.setVerified(true);
+    user.setActive(true);
     userRepository.save(user);
     return Optional.of(user);
   }
