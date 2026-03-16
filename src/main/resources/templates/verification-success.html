@@ -2,78 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificación Exitosa</title>
-
-    <style>
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            height: 100vh;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 8px;
-            max-width: 400px;
-            text-align: center;
-
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #27ae60;
-            margin-top: 0;
-        }
-
-        p {
-            color: #333333;
-            line-height: 1.6;
-        }
-
-        .button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-
-            background-color: #1a73e8;
-            color: #ffffff;
-
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .button:hover {
-            background-color: #0b5ed7;
-        }
-    </style>
-
 </head>
 
-<body>
-
-<div class="container">
-
-    <h1>¡Cuenta Verificada!</h1>
-
-    <p>
-        Tu dirección de correo electrónico ha sido confirmada con éxito.
-        Ya puedes acceder a todas las funcionalidades de nuestra plataforma.
-    </p>
-
-    <a href="/" class="button">
-        Ir al Inicio
-    </a>
-
-</div>
-
+<body th:replace="layout/message-layout :: layout(
+        'Verificación Exitosa',
+        '¡Cuenta Verificada!',
+        '#27ae60',
+        'Tu dirección de correo electrónico ha sido confirmada con éxito. Ya puedes acceder a todas las funcionalidades de nuestra plataforma.',
+        'Ir al Inicio',
+        null
+      )">
 </body>
+
 </html>
