@@ -91,7 +91,7 @@ public class RolesController {
           )
       }
   )
-  public ResponseEntity<?> getRoles(
+  public ResponseEntity<Object> getRoles(
       @RequestParam(name = "name", required = false) String name) {
 
     if (name == null || name.isBlank()) {
