@@ -2,87 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error de Verificación</title>
-
-    <style>
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            height: 100vh;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 8px;
-            max-width: 400px;
-            text-align: center;
-
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #e74c3c;
-            margin-top: 0;
-        }
-
-        p {
-            color: #333333;
-            line-height: 1.6;
-        }
-
-        .error-message {
-            color: #555555;
-            font-size: 0.9em;
-        }
-
-        .button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-
-            background-color: #1a73e8;
-            color: #ffffff;
-
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .button:hover {
-            background-color: #0b5ed7;
-        }
-    </style>
-
 </head>
 
-<body>
-
-<div class="container">
-
-    <h1>¡Error de Verificación!</h1>
-
-    <p>
-        No pudimos verificar tu cuenta. El enlace puede haber expirado o ser inválido.
-    </p>
-
-    <p th:if="${error}"
-       th:text="${error}"
-       class="error-message">
-    </p>
-
-    <a href="/" class="button">
-        Volver al Inicio
-    </a>
-
-</div>
-
+<body th:replace="layout/message-layout :: layout(
+        'Error de Verificación',
+        '¡Error de Verificación!',
+        '#e74c3c',
+        'No pudimos verificar tu cuenta. El enlace puede haber expirado o ser inválido.',
+        'Volver al Inicio',
+        ${error}
+      )">
 </body>
+
 </html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      lang="es"
+      th:fragment="layout(title, header, headerColor, message, buttonText, error)">
+
+<!--/*@thymesVar id="title" type="java.lang.String"*/-->
+<!--/*@thymesVar id="header" type="java.lang.String"*/-->
+<!--/*@thymesVar id="headerColor" type="java.lang.String"*/-->
+<!--/*@thymesVar id="message" type="java.lang.String"*/-->
+<!--/*@thymesVar id="buttonText" type="java.lang.String"*/-->
+<!--/*@thymesVar id="error" type="java.lang.String"*/-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Mensaje</title>
+
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        p {
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            color: #555555;
+            font-size: 0.9em;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1 th:text="${header}"
+        th:style="'color:' + ${headerColor}">
+        Título
+    </h1>
+
+    <p th:text="${message}"></p>
+
+    <p th:if="${error}"
+       th:text="${error}"
+       class="error-message">
+    </p>
+
+    <a href="/" class="button" th:text="${buttonText}">
+        Volver
+    </a>
+
+</div>
+
+</body>
+</html>
