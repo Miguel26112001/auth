@@ -128,13 +128,18 @@ public class UsersController {
           )
       )
   })
-  public ResponseEntity<?> getUserById(@PathVariable Long userId) {
+  public ResponseEntity<Object> getUserById(@PathVariable Long userId) {
+
     var user = userQueryService.handle(new GetUserByIdQuery(userId));
+
     if (user.isEmpty()) {
       return ResponseEntity.status(404)
           .body(new MessageResource("User not found with ID: " + userId));
     }
-    return ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user.get()));
+
+    return ResponseEntity.ok(
+        UserResourceFromEntityAssembler.toResourceFromEntity(user.get())
+    );
   }
 
   /**
