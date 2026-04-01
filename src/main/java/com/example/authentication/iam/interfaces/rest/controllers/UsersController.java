@@ -275,7 +275,8 @@ public class UsersController {
       @PathVariable Long userId,
       @RequestParam("file") MultipartFile file) {
 
-    var command = UpdateUserProfileImageCommandFromResourceAssembler.toCommandFromResource(userId, file);
+    var command = UpdateUserProfileImageCommandFromResourceAssembler
+        .toCommandFromResource(userId, file);
 
     var updatedUser = userCommandService.handle(command);
 
