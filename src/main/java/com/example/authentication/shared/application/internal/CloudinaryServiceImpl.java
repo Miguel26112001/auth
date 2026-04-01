@@ -2,6 +2,7 @@ package com.example.authentication.shared.application.internal;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.authentication.shared.domain.model.dto.CloudinaryResponse;
 import com.example.authentication.shared.domain.services.CloudinaryService;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -36,19 +37,33 @@ public class CloudinaryServiceImpl implements CloudinaryService {
    * @throws RuntimeException if an error occurs during the upload process
    */
   @Override
-  public String upload(MultipartFile file) {
+  public CloudinaryResponse upload(MultipartFile file) {
     try {
       Map<?, ?> result = cloudinary.uploader().upload(
           file.getBytes(),
-          ObjectUtils.asMap(
-              "folder", "uploads"
-          )
+          ObjectUtils.asMap("folder", "uploads")
       );
 
-      return result.get("secure_url").toString();
+      String url = result.get("secure_url").toString();
+      String publicId = result.get("public_id").toString();
+
+      return new CloudinaryResponse(url, publicId);
 
     } catch (Exception e) {
       throw new RuntimeException("Error uploading file to Cloudinary", e);
+    }
+  }
+
+  /**
+   * Deletes an image from Cloudinary.
+   */
+  @Override
+  public String delete(String publicId) {
+    try {
+      var result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+      return result.get("result").toString();
+    } catch (Exception e) {
+      throw new RuntimeException("Error deleting file from Cloudinary", e);
     }
   }
 }

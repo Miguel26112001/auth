@@ -1,5 +1,6 @@
 package com.example.authentication.shared.interfaces.acl;
 
+import com.example.authentication.shared.domain.model.dto.CloudinaryResponse;
 import com.example.authentication.shared.domain.services.CloudinaryService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +32,16 @@ public class CloudinaryServiceContextFacade {
    * @param file the multipart file to upload
    * @return the secure URL of the uploaded file
    */
-  public String uploadFile(MultipartFile file) {
+  public CloudinaryResponse uploadFile(MultipartFile file) {
     return cloudinaryService.upload(file);
+  }
+
+  /**
+   * Deletes a file from Cloudinary using the internal service.
+   *
+   * @param publicId the public ID of the file to delete
+   */
+  public void deleteFile(String publicId) {
+    cloudinaryService.delete(publicId);
   }
 }

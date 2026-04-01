@@ -167,13 +167,17 @@ public class UserCommandServiceImpl implements UserCommandService {
       throw new RuntimeException("File is empty or null");
     }
 
-    String imageUrl = externalCloudinaryService.uploadImage(command.file());
+    if (user.getProfileImagePublicId() != null && !user.getProfileImagePublicId().isEmpty()) {
+      externalCloudinaryService.deleteImage(user.getProfileImagePublicId());
+    }
 
-    if (imageUrl.isEmpty()) {
+    var response = externalCloudinaryService.uploadImage(command.file());
+
+    if (response == null) {
       throw new RuntimeException("Error uploading image to Cloudinary");
     }
 
-    user.setProfileImageUrl(imageUrl);
+    user.updateProfileImage(response.url(), response.publicId());
     userRepository.save(user);
 
     return Optional.of(user);

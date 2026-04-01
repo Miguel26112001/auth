@@ -1,5 +1,6 @@
 package com.example.authentication.iam.application.internal.outboundservices.acl;
 
+import com.example.authentication.shared.domain.model.dto.CloudinaryResponse;
 import com.example.authentication.shared.interfaces.acl.CloudinaryServiceContextFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,17 +32,24 @@ public class ExternalCloudinaryService {
    * @param file the multipart file to upload
    * @return the secure URL of the uploaded image or an empty string if the upload fails
    */
-  public String uploadImage(MultipartFile file) {
+  public CloudinaryResponse uploadImage(MultipartFile file) {
     if (file == null || file.isEmpty()) {
-      return "";
+      return null;
     }
 
     try {
       return cloudinaryServiceContextFacade.uploadFile(file);
     } catch (Exception e) {
-      // Log the error while maintaining the resilience of the IAM service
-      System.err.println("Error al subir imagen a través de la fachada ACL: " + e.getMessage());
-      return "";
+      System.err.println("Error uploading image through ACL: " + e.getMessage());
+      return null;
+    }
+  }
+
+  public void deleteImage(String publicId) {
+    try {
+      cloudinaryServiceContextFacade.deleteFile(publicId);
+    } catch (Exception e) {
+      System.err.println("Could not delete image: " + e.getMessage());
     }
   }
 }
