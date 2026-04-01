@@ -1,11 +1,7 @@
 package com.example.authentication.iam.domain.services;
 
 import com.example.authentication.iam.domain.model.aggregates.User;
-import com.example.authentication.iam.domain.model.commands.SignInCommand;
-import com.example.authentication.iam.domain.model.commands.SignUpCommand;
-import com.example.authentication.iam.domain.model.commands.UpdatePasswordCommand;
-import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
-import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
+import com.example.authentication.iam.domain.model.commands.*;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -53,4 +49,6 @@ public interface UserCommandService {
    * @return optional verified user
    */
   Optional<User> handle(VerifyUserCommand command);
+
+  Optional<User> handle(UpdateUserProfileImageCommand command);
 }
