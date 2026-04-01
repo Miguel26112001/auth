@@ -1,7 +1,7 @@
 package com.example.authentication.shared.domain.services;
 
-import org.springframework.web.multipart.MultipartFile;
 import com.example.authentication.shared.domain.model.dto.CloudinaryResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Service interface for Cloudinary media management.
@@ -23,7 +23,6 @@ public interface CloudinaryService {
    * Deletes a file from Cloudinary using its public ID.
    *
    * @param publicId the public ID of the image to delete
-   * @return a string indicating the result (usually "ok")
    */
-  String delete(String publicId);
+  void delete(String publicId);
 }

@@ -58,10 +58,10 @@ public class CloudinaryServiceImpl implements CloudinaryService {
    * Deletes an image from Cloudinary.
    */
   @Override
-  public String delete(String publicId) {
+  public void delete(String publicId) {
     try {
       var result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-      return result.get("result").toString();
+      result.get("result").toString();
     } catch (Exception e) {
       throw new RuntimeException("Error deleting file from Cloudinary", e);
     }

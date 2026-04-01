@@ -45,6 +45,11 @@ public class ExternalCloudinaryService {
     }
   }
 
+  /**
+   * Deletes an image from Cloudinary using its public ID.
+   *
+   * @param publicId the public ID of the image to delete
+   */
   public void deleteImage(String publicId) {
     try {
       cloudinaryServiceContextFacade.deleteFile(publicId);
