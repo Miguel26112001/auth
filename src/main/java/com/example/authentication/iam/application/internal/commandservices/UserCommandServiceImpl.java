@@ -1,5 +1,6 @@
 package com.example.authentication.iam.application.internal.commandservices;
 
+import com.example.authentication.iam.application.internal.outboundservices.acl.ExternalCloudinaryService;
 import com.example.authentication.iam.application.internal.outboundservices.email.EmailService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.HashingService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.PasswordValidator;
@@ -14,11 +15,7 @@ import com.example.authentication.iam.domain.exceptions.UserNotFoundException;
 import com.example.authentication.iam.domain.exceptions.UserNotVerifiedException;
 import com.example.authentication.iam.domain.exceptions.UsernameAlreadyExistsException;
 import com.example.authentication.iam.domain.model.aggregates.User;
-import com.example.authentication.iam.domain.model.commands.SignInCommand;
-import com.example.authentication.iam.domain.model.commands.SignUpCommand;
-import com.example.authentication.iam.domain.model.commands.UpdatePasswordCommand;
-import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
-import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
+import com.example.authentication.iam.domain.model.commands.*;
 import com.example.authentication.iam.domain.services.UserCommandService;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
@@ -38,6 +35,7 @@ public class UserCommandServiceImpl implements UserCommandService {
   private final TokenService tokenService;
   private final RoleRepository roleRepository;
   private final EmailService emailService;
+  private final ExternalCloudinaryService externalCloudinaryService;
 
   /**
    * Creates a new {@code UserCommandServiceImpl}.
@@ -53,12 +51,13 @@ public class UserCommandServiceImpl implements UserCommandService {
       HashingService hashingService,
       TokenService tokenService,
       RoleRepository roleRepository,
-      EmailService emailService) {
+      EmailService emailService, ExternalCloudinaryService externalCloudinaryService) {
     this.userRepository = userRepository;
     this.hashingService = hashingService;
     this.tokenService = tokenService;
     this.roleRepository = roleRepository;
     this.emailService = emailService;
+    this.externalCloudinaryService = externalCloudinaryService;
   }
 
   /**
@@ -151,6 +150,27 @@ public class UserCommandServiceImpl implements UserCommandService {
     user.setVerified(true);
     user.setActive(true);
     userRepository.save(user);
+    return Optional.of(user);
+  }
+
+  @Override
+  public Optional<User> handle(UpdateUserProfileImageCommand command) {
+    var user = userRepository.findById(command.userId())
+        .orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+
+    if (command.file() == null || command.file().isEmpty()) {
+      throw new RuntimeException("File is empty or null");
+    }
+
+    String imageUrl = externalCloudinaryService.uploadImage(command.file());
+
+    if (imageUrl.isEmpty()) {
+      throw new RuntimeException("Error uploading image to Cloudinary");
+    }
+
+    user.setProfileImageUrl(imageUrl);
+    userRepository.save(user);
+
     return Optional.of(user);
   }
 
