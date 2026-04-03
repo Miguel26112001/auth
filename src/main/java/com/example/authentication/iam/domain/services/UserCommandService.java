@@ -4,6 +4,7 @@ import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
 import com.example.authentication.iam.domain.model.commands.SignUpCommand;
 import com.example.authentication.iam.domain.model.commands.UpdatePasswordCommand;
+import com.example.authentication.iam.domain.model.commands.UpdateUserProfileImageCommand;
 import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
 import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
 import java.util.Optional;
@@ -53,4 +54,6 @@ public interface UserCommandService {
    * @return optional verified user
    */
   Optional<User> handle(VerifyUserCommand command);
+
+  Optional<User> handle(UpdateUserProfileImageCommand command);
 }

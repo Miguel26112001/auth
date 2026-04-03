@@ -48,6 +48,12 @@ public class User extends AuditableAbstractAggregateRoot<User> {
   @Column(nullable = false)
   private boolean isVerified;
 
+  @Column(length = 500, nullable = true)
+  private String profileImageUrl;
+
+  @Column(length = 255)
+  private String profileImagePublicId;
+
   @ManyToMany(
       fetch = FetchType.EAGER,
       cascade = {
@@ -113,5 +119,10 @@ public class User extends AuditableAbstractAggregateRoot<User> {
   public void addRoles(List<Role> roles) {
     var validatedRoleSet = Role.validateRoleSet(roles);
     this.roles.addAll(validatedRoleSet);
+  }
+
+  public void updateProfileImage(String url, String publicId) {
+    this.profileImageUrl = url;
+    this.profileImagePublicId = publicId;
   }
 }
