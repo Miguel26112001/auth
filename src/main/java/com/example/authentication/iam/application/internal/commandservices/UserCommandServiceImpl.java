@@ -163,6 +163,14 @@ public class UserCommandServiceImpl implements UserCommandService {
     var user = userRepository.findById(command.userId())
         .orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
 
+    if (!user.isActive()) {
+      throw new UserNotActiveException(user.getUsername());
+    }
+
+    if (!user.isVerified()) {
+      throw new UserNotVerifiedException(user.getUsername());
+    }
+
     if (command.file() == null || command.file().isEmpty()) {
       throw new RuntimeException("File is empty or null");
     }
