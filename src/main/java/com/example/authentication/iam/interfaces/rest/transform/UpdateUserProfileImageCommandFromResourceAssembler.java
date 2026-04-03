@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public class UpdateUserProfileImageCommandFromResourceAssembler {
 
-  public UpdateUserProfileImageCommandFromResourceAssembler() {
+  private UpdateUserProfileImageCommandFromResourceAssembler() {
     // Prevent instantiation
   }
 
