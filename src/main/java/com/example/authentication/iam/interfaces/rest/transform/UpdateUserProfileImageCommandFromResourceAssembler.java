@@ -8,6 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public class UpdateUserProfileImageCommandFromResourceAssembler {
 
+  public UpdateUserProfileImageCommandFromResourceAssembler() {
+    // Prevent instantiation
+  }
+
   /**
    * Transforms the parameters into an UpdateUserProfileImageCommand.
    *
