@@ -7,6 +7,8 @@ import com.example.authentication.iam.application.internal.outboundservices.hash
 import com.example.authentication.iam.application.internal.outboundservices.tokens.TokenService;
 import com.example.authentication.iam.domain.exceptions.DifferentPasswordException;
 import com.example.authentication.iam.domain.exceptions.EmailAlreadyExistsException;
+import com.example.authentication.iam.domain.exceptions.FileEmptyOrNullException;
+import com.example.authentication.iam.domain.exceptions.ImageUploadException;
 import com.example.authentication.iam.domain.exceptions.InvalidPasswordException;
 import com.example.authentication.iam.domain.exceptions.InvalidTokenException;
 import com.example.authentication.iam.domain.exceptions.RoleNotFoundException;
@@ -172,7 +174,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     }
 
     if (command.file() == null || command.file().isEmpty()) {
-      throw new RuntimeException("File is empty or null");
+      throw new FileEmptyOrNullException();
     }
 
     if (user.getProfileImagePublicId() != null && !user.getProfileImagePublicId().isEmpty()) {
@@ -182,7 +184,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     var response = externalCloudinaryService.uploadImage(command.file());
 
     if (response == null) {
-      throw new RuntimeException("Error uploading image to Cloudinary");
+      throw new ImageUploadException();
     }
 
     user.updateProfileImage(response.url(), response.publicId());

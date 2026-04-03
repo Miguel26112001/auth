@@ -617,8 +617,8 @@ class UserCommandServiceImplTest {
   }
 
   @Test
-  @DisplayName("handle(UpdateUserProfileImageCommand) - null file: throws RuntimeException")
-  void handle_updateUserProfileImage_nullFile_throwsRuntimeException() {
+  @DisplayName("handle(UpdateUserProfileImageCommand) - null file: throws FileEmptyOrNullException")
+  void handle_updateUserProfileImage_nullFile_throwsFileEmptyOrNullException() {
     // Arrange
     var userId = 1L;
     var username = "alice";
@@ -632,13 +632,12 @@ class UserCommandServiceImplTest {
     var command = new UpdateUserProfileImageCommand(userId, null);
 
     // Act & Assert
-    var exception = assertThrows(RuntimeException.class, () -> service.handle(command));
-    assertThat(exception.getMessage()).contains("File is empty or null");
+    assertThrows(FileEmptyOrNullException.class, () -> service.handle(command));
   }
 
   @Test
-  @DisplayName("handle(UpdateUserProfileImageCommand) - empty file: throws RuntimeException")
-  void handle_updateUserProfileImage_emptyFile_throwsRuntimeException() {
+  @DisplayName("handle(UpdateUserProfileImageCommand) - empty file: throws FileEmptyOrNullException")
+  void handle_updateUserProfileImage_emptyFile_throwsFileEmptyOrNullException() {
     // Arrange
     var userId = 1L;
     var username = "alice";
@@ -659,13 +658,12 @@ class UserCommandServiceImplTest {
     var command = new UpdateUserProfileImageCommand(userId, emptyFile);
 
     // Act & Assert
-    var exception = assertThrows(RuntimeException.class, () -> service.handle(command));
-    assertThat(exception.getMessage()).contains("File is empty or null");
+    assertThrows(FileEmptyOrNullException.class, () -> service.handle(command));
   }
 
   @Test
-  @DisplayName("handle(UpdateUserProfileImageCommand) - upload fails: throws RuntimeException")
-  void handle_updateUserProfileImage_uploadFails_throwsRuntimeException() {
+  @DisplayName("handle(UpdateUserProfileImageCommand) - upload fails: throws ImageUploadException")
+  void handle_updateUserProfileImage_uploadFails_throwsImageUploadException() {
     // Arrange
     var userId = 1L;
     var username = "alice";
@@ -687,8 +685,7 @@ class UserCommandServiceImplTest {
     var command = new UpdateUserProfileImageCommand(userId, file);
 
     // Act & Assert
-    var exception = assertThrows(RuntimeException.class, () -> service.handle(command));
-    assertThat(exception.getMessage()).contains("Error uploading image to Cloudinary");
+    assertThrows(ImageUploadException.class, () -> service.handle(command));
   }
 
   @Test
