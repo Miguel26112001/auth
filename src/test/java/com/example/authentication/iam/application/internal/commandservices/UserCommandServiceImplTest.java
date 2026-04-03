@@ -25,6 +25,9 @@ import com.example.authentication.iam.domain.model.entities.Role;
 import com.example.authentication.iam.domain.model.valueobjects.Roles;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import com.example.authentication.iam.application.internal.outboundservices.acl.ExternalCloudinaryService;
+import com.example.authentication.shared.domain.model.dto.CloudinaryResponse;
+import org.springframework.mock.web.MockMultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 class UserCommandServiceImplTest {
@@ -38,6 +41,8 @@ class UserCommandServiceImplTest {
   RoleRepository roleRepository;
   @Mock
   EmailService emailService;
+  @Mock
+  ExternalCloudinaryService externalCloudinaryService;
   @InjectMocks
   UserCommandServiceImpl service;
 
@@ -497,5 +502,315 @@ class UserCommandServiceImplTest {
       // Act & Assert
       assertThrows(InvalidPasswordException.class, () -> service.handle(command));
     }
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - success: uploads new image and returns updated user")
+  void handle_updateUserProfileImage_success_uploadsNewImageAndReturnsUpdatedUser() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    var cloudinaryResponse = new CloudinaryResponse(
+        "https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg",
+        "uploads/profile_123"
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(externalCloudinaryService.uploadImage(file)).thenReturn(cloudinaryResponse);
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).containsSame(user);
+    assertThat(user.getProfileImageUrl())
+        .isEqualTo("https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg");
+    assertThat(user.getProfileImagePublicId()).isEqualTo("uploads/profile_123");
+    verify(userRepository).save(user);
+    verify(externalCloudinaryService).uploadImage(file);
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - user not found: throws UserNotFoundException")
+  void handle_updateUserProfileImage_userNotFound_throwsUserNotFoundException() {
+    // Arrange
+    var userId = 999L;
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act & Assert
+    assertThrows(UserNotFoundException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - user not active: throws UserNotActiveException")
+  void handle_updateUserProfileImage_userNotActive_throwsUserNotActiveException() {
+    // Arrange
+    var userId = 1L;
+    var username = "inactive";
+    var hashed = "hashedPassword";
+    User user = new User(username, "inactive@example.com", hashed, Collections.emptyList());
+    user.setActive(false);
+    user.setVerified(true);
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act & Assert
+    assertThrows(UserNotActiveException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - user not verified: throws UserNotVerifiedException")
+  void handle_updateUserProfileImage_userNotVerified_throwsUserNotVerifiedException() {
+    // Arrange
+    var userId = 1L;
+    var username = "unverified";
+    var hashed = "hashedPassword";
+    User user = new User(username, "unverified@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(false);
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act & Assert
+    assertThrows(UserNotVerifiedException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - null file: throws FileEmptyOrNullException")
+  void handle_updateUserProfileImage_nullFile_throwsFileEmptyOrNullException() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    var command = new UpdateUserProfileImageCommand(userId, null);
+
+    // Act & Assert
+    assertThrows(FileEmptyOrNullException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - empty file: throws FileEmptyOrNullException")
+  void handle_updateUserProfileImage_emptyFile_throwsFileEmptyOrNullException() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+
+    var emptyFile = new MockMultipartFile(
+        "file",
+        "empty.jpg",
+        "image/jpeg",
+        new byte[0]
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+    var command = new UpdateUserProfileImageCommand(userId, emptyFile);
+
+    // Act & Assert
+    assertThrows(FileEmptyOrNullException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - upload fails: throws ImageUploadException")
+  void handle_updateUserProfileImage_uploadFails_throwsImageUploadException() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(externalCloudinaryService.uploadImage(file)).thenReturn(null);
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act & Assert
+    assertThrows(ImageUploadException.class, () -> service.handle(command));
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - with existing image: deletes old image before uploading new one")
+  void handle_updateUserProfileImage_withExistingImage_deletesOldImageBeforeUploadingNewOne() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+    user.updateProfileImage("old-url", "old-public-id");
+
+    var file = new MockMultipartFile(
+        "file",
+        "new-profile.jpg",
+        "image/jpeg",
+        "new image content".getBytes()
+    );
+
+    var cloudinaryResponse = new CloudinaryResponse(
+        "https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/new-profile.jpg",
+        "uploads/new-profile_456"
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(externalCloudinaryService.uploadImage(file)).thenReturn(cloudinaryResponse);
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).containsSame(user);
+    assertThat(user.getProfileImageUrl())
+        .isEqualTo("https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/new-profile.jpg");
+    assertThat(user.getProfileImagePublicId()).isEqualTo("uploads/new-profile_456");
+    verify(externalCloudinaryService).deleteImage("old-public-id");
+    verify(externalCloudinaryService).uploadImage(file);
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - with null publicId: does not delete any image")
+  void handle_updateUserProfileImage_withNullPublicId_doesNotDeleteAnyImage() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+    // publicId remains null
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    var cloudinaryResponse = new CloudinaryResponse(
+        "https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg",
+        "uploads/profile_123"
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(externalCloudinaryService.uploadImage(file)).thenReturn(cloudinaryResponse);
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).containsSame(user);
+    assertThat(user.getProfileImageUrl())
+        .isEqualTo("https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg");
+    assertThat(user.getProfileImagePublicId()).isEqualTo("uploads/profile_123");
+    verify(externalCloudinaryService, never()).deleteImage(anyString());
+    verify(externalCloudinaryService).uploadImage(file);
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  @DisplayName("handle(UpdateUserProfileImageCommand) - with empty publicId: does not delete any image")
+  void handle_updateUserProfileImage_withEmptyPublicId_doesNotDeleteAnyImage() {
+    // Arrange
+    var userId = 1L;
+    var username = "alice";
+    var hashed = "hashedPassword";
+    User user = new User(username, "alice@example.com", hashed, Collections.emptyList());
+    user.setActive(true);
+    user.setVerified(true);
+    user.updateProfileImage("some-url", ""); // empty publicId
+
+    var file = new MockMultipartFile(
+        "file",
+        "profile.jpg",
+        "image/jpeg",
+        "image content".getBytes()
+    );
+
+    var cloudinaryResponse = new CloudinaryResponse(
+        "https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg",
+        "uploads/profile_123"
+    );
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(externalCloudinaryService.uploadImage(file)).thenReturn(cloudinaryResponse);
+
+    var command = new UpdateUserProfileImageCommand(userId, file);
+
+    // Act
+    Optional<User> result = service.handle(command);
+
+    // Assert
+    assertThat(result).containsSame(user);
+    assertThat(user.getProfileImageUrl())
+        .isEqualTo("https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/profile.jpg");
+    assertThat(user.getProfileImagePublicId()).isEqualTo("uploads/profile_123");
+    verify(externalCloudinaryService, never()).deleteImage(anyString());
+    verify(externalCloudinaryService).uploadImage(file);
+    verify(userRepository).save(user);
   }
 }

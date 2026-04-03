@@ -1,11 +1,14 @@
 package com.example.authentication.iam.application.internal.commandservices;
 
+import com.example.authentication.iam.application.internal.outboundservices.acl.ExternalCloudinaryService;
 import com.example.authentication.iam.application.internal.outboundservices.email.EmailService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.HashingService;
 import com.example.authentication.iam.application.internal.outboundservices.hashing.PasswordValidator;
 import com.example.authentication.iam.application.internal.outboundservices.tokens.TokenService;
 import com.example.authentication.iam.domain.exceptions.DifferentPasswordException;
 import com.example.authentication.iam.domain.exceptions.EmailAlreadyExistsException;
+import com.example.authentication.iam.domain.exceptions.FileEmptyOrNullException;
+import com.example.authentication.iam.domain.exceptions.ImageUploadException;
 import com.example.authentication.iam.domain.exceptions.InvalidPasswordException;
 import com.example.authentication.iam.domain.exceptions.InvalidTokenException;
 import com.example.authentication.iam.domain.exceptions.RoleNotFoundException;
@@ -17,6 +20,7 @@ import com.example.authentication.iam.domain.model.aggregates.User;
 import com.example.authentication.iam.domain.model.commands.SignInCommand;
 import com.example.authentication.iam.domain.model.commands.SignUpCommand;
 import com.example.authentication.iam.domain.model.commands.UpdatePasswordCommand;
+import com.example.authentication.iam.domain.model.commands.UpdateUserProfileImageCommand;
 import com.example.authentication.iam.domain.model.commands.UpdateUserStatusCommand;
 import com.example.authentication.iam.domain.model.commands.VerifyUserCommand;
 import com.example.authentication.iam.domain.services.UserCommandService;
@@ -38,6 +42,7 @@ public class UserCommandServiceImpl implements UserCommandService {
   private final TokenService tokenService;
   private final RoleRepository roleRepository;
   private final EmailService emailService;
+  private final ExternalCloudinaryService externalCloudinaryService;
 
   /**
    * Creates a new {@code UserCommandServiceImpl}.
@@ -53,12 +58,13 @@ public class UserCommandServiceImpl implements UserCommandService {
       HashingService hashingService,
       TokenService tokenService,
       RoleRepository roleRepository,
-      EmailService emailService) {
+      EmailService emailService, ExternalCloudinaryService externalCloudinaryService) {
     this.userRepository = userRepository;
     this.hashingService = hashingService;
     this.tokenService = tokenService;
     this.roleRepository = roleRepository;
     this.emailService = emailService;
+    this.externalCloudinaryService = externalCloudinaryService;
   }
 
   /**
@@ -151,6 +157,39 @@ public class UserCommandServiceImpl implements UserCommandService {
     user.setVerified(true);
     user.setActive(true);
     userRepository.save(user);
+    return Optional.of(user);
+  }
+
+  @Override
+  public Optional<User> handle(UpdateUserProfileImageCommand command) {
+    var user = userRepository.findById(command.userId())
+        .orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+
+    if (!user.isActive()) {
+      throw new UserNotActiveException(user.getUsername());
+    }
+
+    if (!user.isVerified()) {
+      throw new UserNotVerifiedException(user.getUsername());
+    }
+
+    if (command.file() == null || command.file().isEmpty()) {
+      throw new FileEmptyOrNullException();
+    }
+
+    if (user.getProfileImagePublicId() != null && !user.getProfileImagePublicId().isEmpty()) {
+      externalCloudinaryService.deleteImage(user.getProfileImagePublicId());
+    }
+
+    var response = externalCloudinaryService.uploadImage(command.file());
+
+    if (response == null) {
+      throw new ImageUploadException();
+    }
+
+    user.updateProfileImage(response.url(), response.publicId());
+    userRepository.save(user);
+
     return Optional.of(user);
   }
 

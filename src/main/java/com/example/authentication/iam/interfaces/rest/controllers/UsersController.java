@@ -8,6 +8,7 @@ import com.example.authentication.iam.domain.services.UserQueryService;
 import com.example.authentication.iam.interfaces.rest.resources.UpdatePasswordResource;
 import com.example.authentication.iam.interfaces.rest.resources.UserResource;
 import com.example.authentication.iam.interfaces.rest.transform.UpdatePasswordCommandFromResourceAssembler;
+import com.example.authentication.iam.interfaces.rest.transform.UpdateUserProfileImageCommandFromResourceAssembler;
 import com.example.authentication.iam.interfaces.rest.transform.UserResourceFromEntityAssembler;
 import com.example.authentication.shared.interfaces.rest.resources.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST controller for managing users.
@@ -250,5 +252,40 @@ public class UsersController {
 
     return ResponseEntity
         .ok(UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get()));
+  }
+
+  /**
+   * Updates the profile image of a user.
+   *
+   * @param userId the ID of the user
+   * @param file   the image file to upload
+   * @return updated user resource
+   */
+  @PatchMapping(value = "/{userId}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and #userId == principal.id)")
+  @Operation(summary = "Update user profile image",
+      description = "Upload and update the profile image of a specific user.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Profile image updated",
+          content = @Content(schema = @Schema(implementation = UserResource.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid file or request"),
+      @ApiResponse(responseCode = "404", description = "User not found")
+  })
+  public ResponseEntity<UserResource> updateUserProfileImage(
+      @PathVariable Long userId,
+      @RequestParam("file") MultipartFile file) {
+
+    var command = UpdateUserProfileImageCommandFromResourceAssembler
+        .toCommandFromResource(userId, file);
+
+    var updatedUser = userCommandService.handle(command);
+
+    if (updatedUser.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    return ResponseEntity.ok(
+        UserResourceFromEntityAssembler.toResourceFromEntity(updatedUser.get())
+    );
   }
 }
