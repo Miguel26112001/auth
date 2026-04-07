@@ -40,6 +40,17 @@ public class AiServiceImpl {
         .content();
   }
 
+  /**
+   * Sends a user query about users to the AI, enabling tool usage for user retrieval.
+   * <p>
+   * This method configures the AI assistant with a system prompt that instructs it to
+   * invoke the {@code getUserByUsername} tool when the user asks about a specific user.
+   * </p>
+   *
+   * @param userInput the user's input query about users
+   * @return the AI-generated response content, potentially incorporating data from
+   *         the {@code getUserByUsername} tool call
+   */
   public String askAboutUsers(String userInput) {
     return chatClient
         .prompt()

@@ -37,7 +37,8 @@ public class AiController {
   }
 
   /**
-   * Processes a question about users and returns an AI-generated response using user information functions.
+   * Processes a question about users and returns an AI-generated
+   * response using user information functions.
    *
    * @param query the user's query about users to be processed by the AI service
    * @return the AI-generated answer with user information
