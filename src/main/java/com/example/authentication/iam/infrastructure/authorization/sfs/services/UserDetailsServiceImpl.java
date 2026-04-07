@@ -2,7 +2,7 @@ package com.example.authentication.iam.infrastructure.authorization.sfs.services
 
 import com.example.authentication.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
 import com.example.authentication.iam.infrastructure.persistence.jpa.repositories.UserRepository;
-import org.jspecify.annotations.NonNull;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
