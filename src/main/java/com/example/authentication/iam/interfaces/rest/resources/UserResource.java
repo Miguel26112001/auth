@@ -16,6 +16,7 @@ public record UserResource(
     String username,
     String email,
     List<String> roles,
-    boolean isActive
+    boolean isActive,
+    String profileImageUrl
 ) {
 }

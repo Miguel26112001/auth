@@ -31,7 +31,8 @@ public class UserResourceFromEntityAssembler {
         user.getUsername(),
         user.getEmail(),
         roles,
-        user.isActive()
+        user.isActive(),
+        user.getProfileImageUrl()
     );
   }
 }

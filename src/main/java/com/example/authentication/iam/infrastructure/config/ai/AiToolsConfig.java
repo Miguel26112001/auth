@@ -40,7 +40,8 @@ public class AiToolsConfig {
         user.getUsername(),
         user.getEmail(),
         user.getRoles().stream().map(Role::getStringRole).toList(),
-        user.isActive()
+        user.isActive(),
+        user.getProfileImageUrl()
     );
   }
 }
